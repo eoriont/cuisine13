@@ -158,8 +158,9 @@ defmodule Cuisine13Web.GroceriesLive do
             </h1>
             <div class="flex gap-2">
               <button
+                type="button"
                 phx-click="refresh_list"
-                class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                class="p-3 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Refresh from calendar"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,8 +169,9 @@ defmodule Cuisine13Web.GroceriesLive do
               </button>
               <%= if Enum.any?(@grocery_items, & &1.is_purchased) do %>
                 <button
+                  type="button"
                   phx-click="clear_purchased"
-                  class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  class="p-3 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Clear purchased items"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,8 +180,9 @@ defmodule Cuisine13Web.GroceriesLive do
                 </button>
               <% end %>
               <button
+                type="button"
                 phx-click="open_add_modal"
-                class="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                class="p-3 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Add item"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,8 +202,9 @@ defmodule Cuisine13Web.GroceriesLive do
             </svg>
             <p class="text-gray-400 text-lg mb-4">No grocery items yet</p>
             <button
+              type="button"
               phx-click="open_add_modal"
-              class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              class="px-6 py-4 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-semibold rounded-lg transition-colors min-h-[48px]"
             >
               Add Your First Item
             </button>
