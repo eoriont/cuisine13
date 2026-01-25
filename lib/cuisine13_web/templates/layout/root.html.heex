@@ -3,14 +3,23 @@
   <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
     <meta name="csrf-token" content={csrf_token_value()}>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="theme-color" content="#030712"/>
     <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
     <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
     <style>
+      /* iOS safe areas for notch/Dynamic Island and home indicator */
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sar: env(safe-area-inset-right);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+      }
+
       /* iOS touch fixes */
       * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
       button, a, [phx-click] {
@@ -19,19 +28,68 @@
         -webkit-user-select: none;
         user-select: none;
       }
-      /* Ensure clickable elements have minimum touch target size */
-      button, [phx-click] { min-height: 44px; min-width: 44px; }
+
+      /* Mobile-optimized touch targets */
+      @media (max-width: 768px) {
+        button, [phx-click], a { min-height: 44px; }
+      }
+
+      /* Sticky header with safe area */
+      .mobile-header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+
+      /* Bottom nav with safe area for home indicator */
+      .mobile-nav {
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+      }
+
+      /* Content padding to account for fixed nav */
+      .mobile-content {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+
+      /* Ensure modals respect safe areas */
+      .mobile-modal {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+
+      /* Smooth scrolling on iOS */
+      html {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
+      /* Prevent body scroll when modal is open */
+      body.modal-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+      }
     </style>
   </head>
   <body class="bg-gray-950 antialiased">
     <%= @inner_content %>
     <script>
-      // iOS Safari fix: ensure touch events work on phx-click elements
+      // iOS Safari fixes
       document.addEventListener('DOMContentLoaded', function() {
-        // Add click listener to force iOS to recognize these as clickable
+        // Force clickable recognition
         document.querySelectorAll('[phx-click]').forEach(function(el) {
           el.style.cursor = 'pointer';
         });
+
+        // Add iOS class for platform-specific styles
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          document.documentElement.classList.add('ios');
+        }
       });
     </script>
   </body>
