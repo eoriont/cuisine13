@@ -103,7 +103,6 @@ Docker Compose uses named volumes for persistence:
 - `postgres_data`: PostgreSQL data
 - `mix_deps`: Mix dependencies (faster builds)
 - `mix_build`: Build artifacts (faster compilation)
-- `node_modules`: Node.js dependencies
 
 ## Troubleshooting
 

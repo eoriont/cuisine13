@@ -30,9 +30,6 @@ RUN mix deps.get
 # Copy app files
 COPY . .
 
-# Install node dependencies
-RUN cd assets && npm install && cd ..
-
 # Compile dependencies
 RUN mix deps.compile
 

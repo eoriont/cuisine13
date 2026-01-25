@@ -34,7 +34,6 @@ services:
       - .:/app
       - mix_deps:/app/deps
       - mix_build:/app/_build
-      - node_modules:/app/assets/node_modules
     depends_on:
       db:
         condition: service_healthy
@@ -46,4 +45,3 @@ volumes:
   postgres_data:
   mix_deps:
   mix_build:
-  node_modules:
