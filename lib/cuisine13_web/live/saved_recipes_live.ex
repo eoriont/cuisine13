@@ -1,21 +1,36 @@
 defmodule Cuisine13Web.SavedRecipesLive do
   use Cuisine13Web, :live_view
 
-  alias Cuisine13.Recipes
+  alias Cuisine13.{Recipes, Households}
 
   on_mount {Cuisine13Web.UserAuth, :ensure_authenticated}
 
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_user
-    recipes = Recipes.list_liked_recipes(current_user.id)
+    household = get_household(current_user)
+
+    # Use household-based liked recipes if available, otherwise fall back to user-based
+    recipes = if household do
+      Recipes.list_household_liked_recipes(household.id)
+    else
+      Recipes.list_liked_recipes(current_user.id)
+    end
 
     socket =
       socket
       |> assign(:recipes, recipes)
+      |> assign(:household, household)
       |> assign(:page_title, "Saved Recipes")
 
     {:ok, socket}
+  end
+
+  defp get_household(user) do
+    case Households.list_households_for_user(user.id) do
+      [household | _] -> household
+      [] -> nil
+    end
   end
 
   @impl true
