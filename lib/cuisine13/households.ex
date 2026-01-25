@@ -39,13 +39,27 @@ defmodule Cuisine13.Households do
   end
 
   @doc """
-  Creates a household with an auto-generated invite code.
+  Gets a household by calendar feed token.
+  """
+  def get_household_by_feed_token(token) when is_binary(token) do
+    Repo.get_by(Household, calendar_feed_token: token)
+  end
+
+  def get_household_by_feed_token(_), do: nil
+
+  @doc """
+  Creates a household with an auto-generated invite code and calendar feed token.
   """
   def create_household(attrs \\ %{}) do
     invite_code = Household.generate_invite_code()
+    calendar_feed_token = Household.generate_calendar_feed_token()
 
     %Household{}
-    |> Household.changeset(Map.put(attrs, :invite_code, invite_code))
+    |> Household.changeset(
+      attrs
+      |> Map.put(:invite_code, invite_code)
+      |> Map.put(:calendar_feed_token, calendar_feed_token)
+    )
     |> Repo.insert()
   end
 
@@ -65,6 +79,24 @@ defmodule Cuisine13.Households do
     new_code = Household.generate_invite_code()
     update_household(household, %{invite_code: new_code})
   end
+
+  @doc """
+  Regenerates the calendar feed token for a household.
+  This invalidates any existing calendar subscriptions.
+  """
+  def regenerate_calendar_feed_token(%Household{} = household) do
+    new_token = Household.generate_calendar_feed_token()
+    update_household(household, %{calendar_feed_token: new_token})
+  end
+
+  @doc """
+  Ensures a household has a calendar feed token, generating one if missing.
+  """
+  def ensure_calendar_feed_token(%Household{calendar_feed_token: nil} = household) do
+    regenerate_calendar_feed_token(household)
+  end
+
+  def ensure_calendar_feed_token(%Household{} = household), do: {:ok, household}
 
   @doc """
   Deletes a household.

@@ -10,6 +10,9 @@ defmodule Cuisine13Web.CalendarLive do
     current_user = socket.assigns.current_user
     household = get_or_create_household(current_user)
 
+    # Ensure household has a calendar feed token
+    {:ok, household} = Households.ensure_calendar_feed_token(household)
+
     today = Date.utc_today()
     week_start = Date.beginning_of_week(today, :monday)
     week_end = Date.add(week_start, 6)
@@ -26,6 +29,7 @@ defmodule Cuisine13Web.CalendarLive do
       |> assign(:planned_meals, planned_meals)
       |> assign(:saved_recipes, saved_recipes)
       |> assign(:show_add_modal, false)
+      |> assign(:show_subscribe_modal, false)
       |> assign(:selected_date, nil)
       |> assign(:selected_meal_type, nil)
 
@@ -75,7 +79,15 @@ defmodule Cuisine13Web.CalendarLive do
 
   @impl true
   def handle_event("close_modal", _params, socket) do
-    {:noreply, assign(socket, :show_add_modal, false)}
+    {:noreply,
+     socket
+     |> assign(:show_add_modal, false)
+     |> assign(:show_subscribe_modal, false)}
+  end
+
+  @impl true
+  def handle_event("open_subscribe_modal", _params, socket) do
+    {:noreply, assign(socket, :show_subscribe_modal, true)}
   end
 
   @impl true
@@ -140,6 +152,15 @@ defmodule Cuisine13Web.CalendarLive do
             <h1 class="text-2xl font-bold text-white">
               Meal Calendar
             </h1>
+            <button
+              phx-click="open_subscribe_modal"
+              class="p-2 hover:bg-gray-800 rounded-lg transition-colors text-gray-400 hover:text-white"
+              title="Subscribe to Calendar"
+            >
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+              </svg>
+            </button>
           </div>
         </div>
       </header>
@@ -317,9 +338,105 @@ defmodule Cuisine13Web.CalendarLive do
         </div>
       <% end %>
 
+      <%= if @show_subscribe_modal do %>
+        <!-- Subscribe Modal Backdrop -->
+        <div
+          class="fixed inset-0 bg-black/80 z-40"
+          phx-click="close_modal"
+        ></div>
+
+        <!-- Subscribe Modal -->
+        <div class="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-lg z-50">
+          <div class="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
+              <h3 class="text-xl font-bold">
+                Subscribe to Calendar
+              </h3>
+              <button
+                phx-click="close_modal"
+                class="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              >
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-6">
+              <p class="text-gray-400">
+                Subscribe to your meal calendar in Google Calendar, Apple Calendar, or any other calendar app.
+              </p>
+
+              <!-- Feed URL -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Calendar URL</label>
+                <div class="flex gap-2">
+                  <input
+                    type="text"
+                    readonly
+                    value={calendar_feed_url(@household)}
+                    id="calendar-feed-url"
+                    class="flex-1 px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm font-mono"
+                  />
+                  <button
+                    onclick="navigator.clipboard.writeText(document.getElementById('calendar-feed-url').value); this.textContent = 'Copied!'; setTimeout(() => this.textContent = 'Copy', 2000);"
+                    class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white font-medium rounded-lg transition-colors text-sm"
+                  >
+                    Copy
+                  </button>
+                </div>
+              </div>
+
+              <!-- Instructions -->
+              <div class="space-y-4">
+                <h4 class="font-semibold text-white">How to Subscribe</h4>
+
+                <div class="space-y-3">
+                  <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">1</div>
+                    <div>
+                      <p class="font-medium text-white">Google Calendar</p>
+                      <p class="text-sm text-gray-400">Settings → Add calendar → From URL → Paste the URL above</p>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                    <div>
+                      <p class="font-medium text-white">Apple Calendar</p>
+                      <p class="text-sm text-gray-400">File → New Calendar Subscription → Paste the URL above</p>
+                    </div>
+                  </div>
+
+                  <div class="flex gap-3">
+                    <div class="flex-shrink-0 w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-sm font-bold">3</div>
+                    <div>
+                      <p class="font-medium text-white">On iPhone/iPad</p>
+                      <p class="text-sm text-gray-400">Settings → Calendar → Accounts → Add Account → Other → Add Subscribed Calendar</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p class="text-xs text-gray-500">
+                Updates may take up to an hour to appear in your calendar app. All household members share the same calendar.
+              </p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+
       <%= render_nav(assigns) %>
     </div>
     """
+  end
+
+  defp calendar_feed_url(household) do
+    # Build the full URL for the calendar feed
+    base_url = Cuisine13Web.Endpoint.url()
+    "#{base_url}/calendar/feed/#{household.calendar_feed_token}"
   end
 
   defp get_or_create_household(user) do

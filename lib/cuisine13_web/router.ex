@@ -96,4 +96,9 @@ defmodule Cuisine13Web.Router do
     get "/users/confirm/:token", UserConfirmationController, :edit
     post "/users/confirm/:token", UserConfirmationController, :update
   end
+
+  # Calendar feed (no authentication required - uses token in URL)
+  scope "/", Cuisine13Web do
+    get "/calendar/feed/:token", CalendarFeedController, :show
+  end
 end
