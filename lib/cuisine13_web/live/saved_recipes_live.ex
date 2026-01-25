@@ -35,6 +35,30 @@ defmodule Cuisine13Web.SavedRecipesLive do
   end
 
   @impl true
+  def handle_event("unlike_recipe", %{"recipe-id" => recipe_id}, socket) do
+    recipe_id = String.to_integer(recipe_id)
+    current_user = socket.assigns.current_user
+    household = socket.assigns.household
+
+    # Unlike the recipe
+    if household do
+      Recipes.unlike_recipe_for_household(recipe_id, household.id)
+    else
+      Recipes.unlike_recipe(recipe_id, current_user.id)
+    end
+
+    # Refresh the recipes list
+    recipes =
+      if household do
+        Recipes.list_household_liked_recipes(household.id)
+      else
+        Recipes.list_liked_recipes(current_user.id)
+      end
+
+    {:noreply, assign(socket, :recipes, recipes)}
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white">
@@ -65,31 +89,41 @@ defmodule Cuisine13Web.SavedRecipesLive do
         <% else %>
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <%= for recipe <- @recipes do %>
-              <%= live_redirect to: "/recipes/#{recipe.id}", class: "block group" do %>
-                <div class="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-blue-500/50">
-                  <div class="relative h-48 overflow-hidden">
-                    <%= if recipe.image_url do %>
-                      <img src={recipe.image_url} alt={recipe.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                    <% else %>
-                      <div class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
-                        <span class="text-5xl">🍽️</span>
-                      </div>
-                    <% end %>
-                    <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>
-                  </div>
-                  <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-2 text-white group-hover:text-blue-500 transition-colors"><%= recipe.title %></h3>
-                    <div class="flex items-center gap-3 text-sm text-gray-400">
-                      <%= if recipe.total_time_minutes do %>
-                        <span><%= recipe.total_time_minutes %> min</span>
-                      <% end %>
-                      <%= if recipe.servings do %>
-                        <span><%= recipe.servings %> servings</span>
-                      <% end %>
+              <div class="group relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-blue-500/50">
+                <div class="relative h-48 overflow-hidden">
+                  <%= if recipe.image_url do %>
+                    <img src={recipe.image_url} alt={recipe.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                  <% else %>
+                    <div class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
+                      <span class="text-5xl">🍽️</span>
                     </div>
-                  </div>
+                  <% end %>
+                  <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>
+
+                  <!-- Unlike Button -->
+                  <button
+                    phx-click="unlike_recipe"
+                    phx-value-recipe-id={recipe.id}
+                    class="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center hover:bg-black/60"
+                  >
+                    <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                      <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                    </svg>
+                  </button>
                 </div>
-              <% end %>
+
+                <%= live_redirect to: "/recipes/#{recipe.id}", class: "block p-4" do %>
+                  <h3 class="text-lg font-semibold mb-2 text-white group-hover:text-blue-500 transition-colors"><%= recipe.title %></h3>
+                  <div class="flex items-center gap-3 text-sm text-gray-400">
+                    <%= if recipe.total_time_minutes do %>
+                      <span><%= recipe.total_time_minutes %> min</span>
+                    <% end %>
+                    <%= if recipe.servings do %>
+                      <span><%= recipe.servings %> servings</span>
+                    <% end %>
+                  </div>
+                <% end %>
+              </div>
             <% end %>
           </div>
         <% end %>
