@@ -1,7 +1,7 @@
 defmodule Cuisine13Web.GroceriesLive do
   use Cuisine13Web, :live_view
 
-  alias Cuisine13.{Groceries, Households}
+  alias Cuisine13.{Groceries, Households, Pantry}
 
   on_mount {Cuisine13Web.UserAuth, :ensure_authenticated}
 
@@ -88,6 +88,21 @@ defmodule Cuisine13Web.GroceriesLive do
   @impl true
   def handle_event("clear_purchased", _params, socket) do
     Groceries.clear_purchased_items(socket.assigns.household.id)
+
+    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
+
+    {:noreply,
+     socket
+     |> assign(:grocery_items, grocery_items)
+     |> assign(:items_by_category, items_by_category)}
+  end
+
+  @impl true
+  def handle_event("add_to_pantry", %{"id" => id}, socket) do
+    item = Groceries.get_grocery_item!(id)
+    Pantry.add_from_grocery_item(item, socket.assigns.current_user.id)
+    Groceries.delete_grocery_item(item)
 
     grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
     items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
@@ -244,7 +259,7 @@ defmodule Cuisine13Web.GroceriesLive do
                         </div>
                         <div class="text-sm text-gray-400 flex items-center gap-2">
                           <%= if item.quantity && item.unit do %>
-                            <span><%= Decimal.to_string(item.quantity) %> <%= item.unit %></span>
+                            <span><%= format_quantity(item.quantity) %> <%= item.unit %></span>
                           <% end %>
                           <%= if item.needed_by_date do %>
                             <span class="text-purple-400">
@@ -254,15 +269,29 @@ defmodule Cuisine13Web.GroceriesLive do
                         </div>
                       </div>
 
-                      <button
-                        phx-click="delete_item"
-                        phx-value-id={item.id}
-                        class="flex-shrink-0 p-2 hover:bg-red-500/20 rounded-lg transition-colors group"
-                      >
-                        <svg class="w-5 h-5 text-gray-400 group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
-                        </svg>
-                      </button>
+                      <div class="flex items-center gap-2">
+                        <%= if item.is_purchased do %>
+                          <button
+                            phx-click="add_to_pantry"
+                            phx-value-id={item.id}
+                            class="flex-shrink-0 p-2 hover:bg-purple-500/20 rounded-lg transition-colors group"
+                            title="Add to pantry"
+                          >
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                            </svg>
+                          </button>
+                        <% end %>
+                        <button
+                          phx-click="delete_item"
+                          phx-value-id={item.id}
+                          class="flex-shrink-0 p-2 hover:bg-red-500/20 rounded-lg transition-colors group"
+                        >
+                          <svg class="w-5 h-5 text-gray-400 group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   <% end %>
                 </div>
@@ -402,6 +431,48 @@ defmodule Cuisine13Web.GroceriesLive do
       "needed_by_date" => ""
     })
   end
+
+  defp format_quantity(nil), do: ""
+
+  defp format_quantity(quantity) when is_struct(quantity, Decimal) do
+    float_val = Decimal.to_float(quantity)
+
+    cond do
+      float_val == Float.round(float_val) ->
+        float_val |> trunc() |> to_string()
+
+      abs(float_val - 0.25) < 0.01 -> "1/4"
+      abs(float_val - 0.33) < 0.02 -> "1/3"
+      abs(float_val - 0.5) < 0.01 -> "1/2"
+      abs(float_val - 0.67) < 0.02 -> "2/3"
+      abs(float_val - 0.75) < 0.01 -> "3/4"
+
+      float_val > 1 ->
+        whole = trunc(float_val)
+        fraction = float_val - whole
+
+        fraction_str =
+          cond do
+            abs(fraction - 0.25) < 0.01 -> "1/4"
+            abs(fraction - 0.33) < 0.02 -> "1/3"
+            abs(fraction - 0.5) < 0.01 -> "1/2"
+            abs(fraction - 0.67) < 0.02 -> "2/3"
+            abs(fraction - 0.75) < 0.01 -> "3/4"
+            true -> Float.round(fraction, 2) |> to_string()
+          end
+
+        if fraction < 0.05 do
+          to_string(whole)
+        else
+          "#{whole} #{fraction_str}"
+        end
+
+      true ->
+        Float.round(float_val, 2) |> to_string()
+    end
+  end
+
+  defp format_quantity(quantity), do: to_string(quantity)
 
   defp render_nav(assigns) do
     ~H"""

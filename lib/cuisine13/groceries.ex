@@ -141,6 +141,7 @@ defmodule Cuisine13.Groceries do
 
   @doc """
   Generates grocery items from planned meals in a date range.
+  Aggregates quantities for duplicate ingredients (same name + unit).
   """
   def generate_from_planned_meals(household_id, start_date, end_date) do
     planned_meals = Planning.list_planned_meals(household_id, start_date, end_date)
@@ -156,39 +157,80 @@ defmodule Cuisine13.Groceries do
     |> Repo.delete_all()
 
     # Generate new items from planned meals (excluding leftovers)
-    planned_meals
-    |> Enum.reject(& &1.is_leftover)
-    |> Enum.flat_map(fn planned_meal ->
-      recipe = Recipes.get_recipe!(planned_meal.recipe_id)
+    aggregated_items =
+      planned_meals
+      |> Enum.reject(& &1.is_leftover)
+      |> Enum.flat_map(fn planned_meal ->
+        recipe = Recipes.get_recipe!(planned_meal.recipe_id)
 
-      scaled_ingredients =
-        Planning.scale_ingredients(
-          recipe.ingredients,
-          recipe.servings,
-          planned_meal.servings
-        )
+        scaled_ingredients =
+          Planning.scale_ingredients(
+            recipe.ingredients,
+            recipe.servings,
+            planned_meal.servings
+          )
 
-      Enum.map(scaled_ingredients, fn ingredient ->
-        %{
-          household_id: household_id,
-          ingredient_id: ingredient.id,
-          name: ingredient.name,
-          quantity: ingredient.quantity,
-          unit: ingredient.unit,
-          category: ingredient.category,
-          needed_by_date: planned_meal.scheduled_date,
-          inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
-          updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
-        }
+        Enum.map(scaled_ingredients, fn ingredient ->
+          %{
+            name: ingredient.name,
+            quantity: ingredient.quantity,
+            unit: ingredient.unit,
+            category: ingredient.category,
+            needed_by_date: planned_meal.scheduled_date,
+            ingredient_id: ingredient.id
+          }
+        end)
       end)
+      |> aggregate_ingredients(household_id)
+
+    if Enum.empty?(aggregated_items) do
+      {:ok, []}
+    else
+      Repo.insert_all(GroceryItem, aggregated_items)
+      {:ok, list_grocery_items(household_id)}
+    end
+  end
+
+  # Aggregates ingredients by name and unit, summing quantities
+  defp aggregate_ingredients(ingredients, household_id) do
+    now = NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
+
+    ingredients
+    |> Enum.group_by(fn item ->
+      # Group by name and unit (case-insensitive name matching)
+      {String.downcase(item.name), item.unit}
     end)
-    |> then(fn items ->
-      if Enum.empty?(items) do
-        {:ok, []}
-      else
-        Repo.insert_all(GroceryItem, items)
-        {:ok, list_grocery_items(household_id)}
-      end
+    |> Enum.map(fn {{_name, _unit}, items} ->
+      # Take the first item as template and sum quantities
+      first_item = List.first(items)
+
+      total_quantity =
+        items
+        |> Enum.map(& &1.quantity)
+        |> Enum.reject(&is_nil/1)
+        |> case do
+          [] -> nil
+          quantities -> Enum.reduce(quantities, Decimal.new(0), &Decimal.add/2)
+        end
+
+      # Use the earliest needed_by_date
+      earliest_date =
+        items
+        |> Enum.map(& &1.needed_by_date)
+        |> Enum.reject(&is_nil/1)
+        |> Enum.min(Date, fn -> nil end)
+
+      %{
+        household_id: household_id,
+        ingredient_id: first_item.ingredient_id,
+        name: first_item.name,
+        quantity: total_quantity,
+        unit: first_item.unit,
+        category: first_item.category,
+        needed_by_date: earliest_date,
+        inserted_at: now,
+        updated_at: now
+      }
     end)
   end
 end
