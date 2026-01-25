@@ -24,6 +24,7 @@ defmodule Cuisine13Web.Router do
     live "/recipes/saved", SavedRecipesLive, :index
     live "/recipes/:id", RecipeDetailLive, :show
     live "/calendar", CalendarLive, :index
+    live "/calendar/full", FullCalendarLive, :index
     live "/groceries", GroceriesLive, :index
     live "/prep", PrepTimelineLive, :index
     live "/households", HouseholdLive, :index
