@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
@@ -7,9 +7,24 @@
     <meta name="csrf-token" content={csrf_token_value()}>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-    <meta name="theme-color" content="#030712"/>
+    <meta name="theme-color" content="#030712" id="theme-color-meta"/>
     <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
+    <script>
+      // Theme initialization - runs before page render to prevent flash
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (stored === 'light' || (stored === 'system' && !prefersDark) || (!stored && !prefersDark)) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
     <style>
       /* iOS safe areas for notch/Dynamic Island and home indicator */
@@ -19,6 +34,71 @@
         --sab: env(safe-area-inset-bottom);
         --sal: env(safe-area-inset-left);
       }
+
+      /* Theme colors */
+      :root.dark {
+        --bg-primary: #030712;
+        --bg-secondary: #111827;
+        --bg-tertiary: #1f2937;
+        --text-primary: #ffffff;
+        --text-secondary: #9ca3af;
+        --text-muted: #6b7280;
+        --border-color: #374151;
+        --accent-primary: #a855f7;
+        --accent-secondary: #ec4899;
+      }
+
+      :root.light {
+        --bg-primary: #ffffff;
+        --bg-secondary: #f9fafb;
+        --bg-tertiary: #f3f4f6;
+        --text-primary: #111827;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --border-color: #e5e7eb;
+        --accent-primary: #9333ea;
+        --accent-secondary: #db2777;
+      }
+
+      /* Apply theme colors */
+      .theme-bg-primary { background-color: var(--bg-primary); }
+      .theme-bg-secondary { background-color: var(--bg-secondary); }
+      .theme-bg-tertiary { background-color: var(--bg-tertiary); }
+      .theme-text-primary { color: var(--text-primary); }
+      .theme-text-secondary { color: var(--text-secondary); }
+      .theme-text-muted { color: var(--text-muted); }
+      .theme-border { border-color: var(--border-color); }
+
+      /* Dark mode specific overrides */
+      :root.dark body { background-color: #030712; color: #ffffff; }
+      :root.light body { background-color: #ffffff; color: #111827; }
+
+      /* Light mode overrides for common elements */
+      :root.light .bg-gray-950 { background-color: #ffffff; }
+      :root.light .bg-gray-900 { background-color: #f9fafb; }
+      :root.light .bg-gray-900\/95 { background-color: rgba(249, 250, 251, 0.95); }
+      :root.light .bg-gray-800 { background-color: #f3f4f6; }
+      :root.light .bg-gray-800\/50 { background-color: rgba(243, 244, 246, 0.5); }
+      :root.light .bg-gray-700 { background-color: #e5e7eb; }
+      :root.light .bg-gray-700\/50 { background-color: rgba(229, 231, 235, 0.5); }
+      :root.light .text-white { color: #111827; }
+      :root.light .text-gray-400 { color: #6b7280; }
+      :root.light .text-gray-500 { color: #9ca3af; }
+      :root.light .text-gray-300 { color: #4b5563; }
+      :root.light .text-gray-200 { color: #374151; }
+      :root.light .border-gray-800 { border-color: #e5e7eb; }
+      :root.light .border-gray-700 { border-color: #d1d5db; }
+      :root.light .divide-gray-800 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
+      :root.light .hover\:bg-gray-800:hover { background-color: #e5e7eb; }
+      :root.light .hover\:bg-gray-700:hover { background-color: #d1d5db; }
+      :root.light .hover\:text-white:hover { color: #111827; }
+      :root.light input, :root.light select, :root.light textarea {
+        background-color: #f9fafb;
+        border-color: #d1d5db;
+        color: #111827;
+      }
+      :root.light input::placeholder { color: #9ca3af; }
+      :root.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.5); }
 
       /* iOS touch fixes */
       * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
@@ -76,7 +156,7 @@
       }
     </style>
   </head>
-  <body class="bg-gray-950 antialiased">
+  <body class="bg-gray-950 antialiased transition-colors duration-200">
     <%= @inner_content %>
     <script>
       // iOS Safari fixes
@@ -91,6 +171,48 @@
           document.documentElement.classList.add('ios');
         }
       });
+
+      // Theme management
+      window.ThemeManager = {
+        setTheme: function(theme) {
+          localStorage.setItem('theme', theme);
+          this.applyTheme(theme);
+        },
+
+        applyTheme: function(theme) {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+
+          if (isDark) {
+            document.documentElement.classList.remove('light');
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-color-meta').content = '#030712';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            document.getElementById('theme-color-meta').content = '#ffffff';
+          }
+
+          // Dispatch event for LiveView to pick up
+          window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: theme, isDark: isDark } }));
+        },
+
+        getTheme: function() {
+          return localStorage.getItem('theme') || 'system';
+        },
+
+        init: function() {
+          // Listen for system preference changes
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            if (currentTheme === 'system') {
+              window.ThemeManager.applyTheme('system');
+            }
+          });
+        }
+      };
+
+      window.ThemeManager.init();
     </script>
   </body>
 </html>

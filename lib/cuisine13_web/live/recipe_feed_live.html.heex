@@ -51,6 +51,23 @@
               <!-- Gradient Overlay -->
               <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>
 
+              <!-- Like Button -->
+              <button
+                phx-click="toggle_like"
+                phx-value-recipe-id={recipe.id}
+                class="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <%= if recipe_liked?(recipe, @liked_recipe_ids) do %>
+                  <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                  </svg>
+                <% else %>
+                  <svg class="w-6 h-6 text-white hover:text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                  </svg>
+                <% end %>
+              </button>
+
               <!-- Allergen Badge -->
               <%= if has_allergens?(recipe, @current_user) do %>
                 <div class="absolute top-3 left-3">
