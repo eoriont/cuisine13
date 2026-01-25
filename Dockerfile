@@ -16,9 +16,9 @@ RUN mix local.hex --force && \
 # Development stage
 FROM base AS dev
 
-# Install node for assets
+# Install node for assets and inotify-tools for live reload
 RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt-get install -y nodejs && \
+    apt-get install -y nodejs inotify-tools && \
     apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Copy mix files

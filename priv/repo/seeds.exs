@@ -12,8 +12,13 @@
 
 alias Cuisine13.Repo
 alias Cuisine13.Recipes.{Recipe, Ingredient, Instruction, PrepTask}
+alias Cuisine13.Planning.PlannedMeal
+alias Cuisine13.Groceries.GroceryItem
 
 # Clear existing data (optional, comment out if you don't want to reset)
+# Delete in order of foreign key dependencies
+Repo.delete_all(GroceryItem)
+Repo.delete_all(PlannedMeal)
 Repo.delete_all(Instruction)
 Repo.delete_all(Ingredient)
 Repo.delete_all(PrepTask)
