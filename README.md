@@ -21,12 +21,10 @@ A social meal planning application that combines recipe discovery (Instagram Ree
 
 ## Prerequisites
 
-- Elixir 1.15 or higher
-- Erlang/OTP 26 or higher
-- PostgreSQL 15 or higher
-- Node.js 18+ (for asset compilation)
+- [Docker](https://docs.docker.com/get-docker/)
+- [Docker Compose](https://docs.docker.com/compose/install/)
 
-## Getting Started
+## Getting Started (Docker - Recommended)
 
 ### 1. Clone the repository
 
@@ -34,56 +32,50 @@ A social meal planning application that combines recipe discovery (Instagram Ree
 cd cuisine13
 ```
 
-### 2. Install dependencies
+### 2. Copy environment file
 
 ```bash
-mix deps.get
-cd assets && npm install && cd ..
+cp .env.example .env
 ```
 
-### 3. Configure database
-
-Update `config/dev.exs` with your PostgreSQL credentials:
-
-```elixir
-config :cuisine13, Cuisine13.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "cuisine13_dev",
-  stacktrace: true,
-  show_sensitive_data_on_connection_error: true,
-  pool_size: 10
-```
-
-### 4. Create and migrate database
+### 3. Start the application
 
 ```bash
-mix ecto.setup
+./scripts/docker-dev.sh start
 ```
 
 This will:
-- Create the database
-- Run all migrations
-- Run seeds (if any)
+- Build the Docker containers
+- Start PostgreSQL database
+- Create and migrate the database
+- Seed sample recipes
+- Start the Phoenix server
 
-### 5. Start the Phoenix server
-
-```bash
-mix phx.server
-```
-
-Or run inside IEx:
-
-```bash
-iex -S mix phx.server
-```
-
-### 6. Visit the application
+### 4. Visit the application
 
 Open your browser to [`http://localhost:4000`](http://localhost:4000)
 
 To create an account, visit [`http://localhost:4000/users/register`](http://localhost:4000/users/register)
+
+### 5. Stop the application
+
+```bash
+./scripts/docker-dev.sh stop
+```
+
+**For detailed Docker commands and troubleshooting, see [DOCKER.md](DOCKER.md)**
+
+## Local Development (Alternative)
+
+If you prefer to run without Docker, you'll need:
+- Elixir 1.15+, Erlang/OTP 26+, PostgreSQL 15+
+
+Then run:
+```bash
+mix deps.get
+mix ecto.setup
+mix phx.server
+```
 
 ## Database Schema
 
@@ -184,107 +176,118 @@ priv/
 ### Running tests
 
 ```bash
-mix test
+./scripts/docker-dev.sh test
 ```
 
 ### Reset database
 
 ```bash
-mix ecto.reset
+./scripts/docker-dev.sh reset
+```
+
+### Run migrations
+
+```bash
+./scripts/docker-dev.sh migrate
 ```
 
 ### Create a new migration
 
 ```bash
-mix ecto.gen.migration migration_name
+./scripts/docker-dev.sh mix ecto.gen.migration migration_name
 ```
 
-### Interactive console
+### Interactive console (IEx)
 
 ```bash
-iex -S mix
+./scripts/docker-dev.sh iex
+```
+
+### Shell access
+
+```bash
+./scripts/docker-dev.sh shell
+```
+
+### View logs
+
+```bash
+./scripts/docker-dev.sh logs
 ```
 
 ### Code formatting
 
 ```bash
-mix format
+./scripts/docker-dev.sh mix format
+```
+
+### Rebuild containers
+
+```bash
+./scripts/docker-dev.sh build
 ```
 
 ## Seeding Data
 
-To add sample recipes for development, create seed data in `priv/repo/seeds.exs`:
+The database is automatically seeded with 5 sample recipes when you first start the Docker containers:
+- Spaghetti Carbonara
+- Chicken Tikka Masala
+- Perfect Avocado Toast
+- Thai Green Curry
+- Classic Chocolate Chip Cookies
 
-```elixir
-alias Cuisine13.{Repo, Recipes}
-
-# Create a sample recipe
-{:ok, recipe} = Recipes.create_recipe(%{
-  title: "Spaghetti Carbonara",
-  description: "Classic Italian pasta dish",
-  image_url: "https://example.com/image.jpg",
-  prep_time_minutes: 10,
-  cook_time_minutes: 20,
-  total_time_minutes: 30,
-  servings: 4,
-  difficulty: "medium"
-})
-
-# Add ingredients
-Recipes.create_ingredient(%{
-  recipe_id: recipe.id,
-  name: "spaghetti",
-  quantity: 400,
-  unit: "g",
-  category: "pantry",
-  order: 1
-})
-
-# Add instructions
-Recipes.create_instruction(%{
-  recipe_id: recipe.id,
-  step_number: 1,
-  description: "Bring a large pot of salted water to boil"
-})
-```
-
-Then run:
+To re-seed the database:
 
 ```bash
-mix run priv/repo/seeds.exs
+./scripts/docker-dev.sh seed
 ```
 
-## Next Steps (MVP Implementation)
+To add more seed data, edit `priv/repo/seeds.exs` and restart the containers.
 
-1. **Create LiveView pages**:
-   - Recipe feed (`/`)
-   - Meal calendar (`/calendar`)
-   - Saved recipes (`/recipes/saved`)
-   - Grocery list (`/groceries`)
-   - Prep timeline (`/prep`)
+## Implemented Features
 
-2. **Implement recipe feed**:
-   - Infinite scroll
-   - Like button with live updates
-   - Allergen warnings
+✅ **LiveView Pages**:
+- Recipe feed (`/`) - Instagram Reels-style vertical scroll
+- Saved recipes (`/recipes/saved`)
+- Meal calendar (`/calendar`, `/calendar/full`)
+- Grocery list (`/groceries`) - Auto-generated from planned meals
+- Prep timeline (`/prep`)
+- Household management (`/households`)
 
-3. **Build calendar interface**:
-   - Weekly/monthly view
-   - Add meal to calendar
-   - Drag-and-drop scheduling
+✅ **Recipe Feed**:
+- Vertical scrolling feed
+- Like/save functionality
+- Recipe details view
 
-4. **Grocery list features**:
-   - Category grouping
-   - Check-off items
-   - Real-time updates
+✅ **Calendar Interface**:
+- Weekly and full calendar views
+- Add meals to calendar
+- Portion adjustment
 
-5. **Add seed data**:
-   - Sample recipes with images
-   - Common ingredients with allergens
+✅ **Grocery List**:
+- Auto-generation from upcoming meals (14 days)
+- Smart quantity aggregation
+- Category grouping
+- Purchase tracking
+- Pantry integration
+- Fraction display (1/2 cup, 1/3 cup, etc.)
+
+✅ **Seed Data**:
+- 5 sample recipes with ingredients and instructions
+- Automatic seeding on first startup
 
 ## Production Deployment
 
-Ready to run in production? Check out the [Phoenix deployment guides](https://hexdocs.pm/phoenix/deployment.html).
+### Using Docker (Recommended)
+
+See [DOCKER.md](DOCKER.md) for production deployment with Docker Compose.
+
+Quick start:
+```bash
+cp .env.example .env.prod
+# Edit .env.prod with production values
+docker-compose -f docker-compose.prod.yml up -d
+```
 
 ### Environment Variables
 
@@ -293,6 +296,8 @@ Set these environment variables in production:
 - `DATABASE_URL`: PostgreSQL connection string
 - `SECRET_KEY_BASE`: Phoenix secret (generate with `mix phx.gen.secret`)
 - `PHX_HOST`: Your production hostname
+
+For more deployment options, check out the [Phoenix deployment guides](https://hexdocs.pm/phoenix/deployment.html).
 
 ## Learn More
 
