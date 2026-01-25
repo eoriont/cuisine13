@@ -37,8 +37,7 @@ defmodule Cuisine13Web.RecipeFeedLive do
     {:noreply,
      socket
      |> assign(:show_calendar_modal, true)
-     |> assign(:selected_recipe_id, String.to_integer(recipe_id))
-    }
+     |> assign(:selected_recipe_id, String.to_integer(recipe_id))}
   end
 
   @impl true
@@ -64,8 +63,7 @@ defmodule Cuisine13Web.RecipeFeedLive do
         {:noreply,
          socket
          |> assign(:show_calendar_modal, false)
-         |> put_flash(:info, "Added to calendar!")
-        }
+         |> put_flash(:info, "Added to calendar!")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to add to calendar")}
@@ -81,13 +79,14 @@ defmodule Cuisine13Web.RecipeFeedLive do
 
     is_liked = MapSet.member?(liked_recipe_ids, recipe_id)
 
-    new_liked_ids = if is_liked do
-      Recipes.unlike_recipe_for_household(recipe_id, household.id)
-      MapSet.delete(liked_recipe_ids, recipe_id)
-    else
-      Recipes.like_recipe_for_household(recipe_id, current_user.id, household.id)
-      MapSet.put(liked_recipe_ids, recipe_id)
-    end
+    new_liked_ids =
+      if is_liked do
+        Recipes.unlike_recipe_for_household(recipe_id, household.id)
+        MapSet.delete(liked_recipe_ids, recipe_id)
+      else
+        Recipes.like_recipe_for_household(recipe_id, current_user.id, household.id)
+        MapSet.put(liked_recipe_ids, recipe_id)
+      end
 
     {:noreply, assign(socket, :liked_recipe_ids, new_liked_ids)}
   end

@@ -80,8 +80,11 @@ defmodule Cuisine13Web.HouseholdLive do
     case Households.leave_household(socket.assigns.household.id, socket.assigns.current_user.id) do
       {:ok, _} ->
         # Create a new household for the user
-        {:ok, new_household} = Households.create_household(%{name: "#{socket.assigns.current_user.email}'s Household"})
-        {:ok, _} = Households.add_member(new_household.id, socket.assigns.current_user.id, "admin")
+        {:ok, new_household} =
+          Households.create_household(%{name: "#{socket.assigns.current_user.email}'s Household"})
+
+        {:ok, _} =
+          Households.add_member(new_household.id, socket.assigns.current_user.id, "admin")
 
         {:noreply,
          socket
@@ -89,7 +92,12 @@ defmodule Cuisine13Web.HouseholdLive do
          |> put_flash(:info, "Left household. Created a new one for you.")}
 
       {:error, :last_admin} ->
-        {:noreply, put_flash(socket, :error, "You can't leave - you're the only admin. Add another admin first or delete the household.")}
+        {:noreply,
+         put_flash(
+           socket,
+           :error,
+           "You can't leave - you're the only admin. Add another admin first or delete the household."
+         )}
 
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to leave household")}
@@ -103,7 +111,7 @@ defmodule Cuisine13Web.HouseholdLive do
       <!-- Header -->
       <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-2xl mx-auto px-4 py-4">
-          <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+          <h1 class="text-2xl font-bold text-white">
             Household
           </h1>
         </div>
@@ -121,7 +129,7 @@ defmodule Cuisine13Web.HouseholdLive do
               <div class="space-y-2">
                 <%= for user <- @household.users do %>
                   <div class="flex items-center gap-3 p-3 bg-gray-800/50 rounded-lg">
-                    <div class="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-lg font-semibold">
+                    <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-lg font-semibold">
                       <%= String.first(user.email) |> String.upcase() %>
                     </div>
                     <div class="flex-1">
@@ -131,7 +139,7 @@ defmodule Cuisine13Web.HouseholdLive do
                       </div>
                     </div>
                     <%= if user.id == @current_user.id do %>
-                      <span class="text-xs text-purple-400 px-2 py-1 bg-purple-500/20 rounded">You</span>
+                      <span class="text-xs text-blue-500 px-2 py-1 bg-blue-500/20 rounded">You</span>
                     <% end %>
                   </div>
                 <% end %>
@@ -143,7 +151,7 @@ defmodule Cuisine13Web.HouseholdLive do
               <h3 class="text-sm font-medium text-gray-400 mb-2">Invite Code</h3>
               <p class="text-xs text-gray-500 mb-3">Share this code with your roommate so they can join your household.</p>
               <div class="flex items-center gap-3">
-                <code class="flex-1 text-2xl font-mono font-bold text-purple-400 tracking-wider bg-gray-900 px-4 py-3 rounded-lg text-center">
+                <code class="flex-1 text-2xl font-mono font-bold text-blue-500 tracking-wider bg-gray-900 px-4 py-3 rounded-lg text-center">
                   <%= String.upcase(@household.invite_code || "--------") %>
                 </code>
                 <button
@@ -193,11 +201,11 @@ defmodule Cuisine13Web.HouseholdLive do
                     phx-key="Enter"
                     placeholder="Enter code"
                     maxlength="8"
-                    class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-center font-mono text-lg tracking-wider uppercase focus:outline-none focus:border-purple-500"
+                    class="flex-1 px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white text-center font-mono text-lg tracking-wider uppercase focus:outline-none focus:border-blue-500"
                   />
                   <button
                     phx-click="join_household"
-                    class="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors"
+                    class="px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors"
                   >
                     Join
                   </button>
@@ -249,7 +257,7 @@ defmodule Cuisine13Web.HouseholdLive do
             </svg>
             <span class="text-xs font-medium">Groceries</span>
           <% end %>
-          <%= live_redirect to: "/users/settings", class: "flex flex-col items-center gap-1 text-purple-400 transition-colors" do %>
+          <%= live_redirect to: "/users/settings", class: "flex flex-col items-center gap-1 text-blue-500 transition-colors" do %>
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
             </svg>

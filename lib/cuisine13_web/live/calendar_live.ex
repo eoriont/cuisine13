@@ -37,14 +37,14 @@ defmodule Cuisine13Web.CalendarLive do
     new_week_start = Date.add(socket.assigns.week_start, -7)
     new_week_end = Date.add(socket.assigns.week_end, -7)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
 
     {:noreply,
      socket
      |> assign(:week_start, new_week_start)
      |> assign(:week_end, new_week_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -52,14 +52,14 @@ defmodule Cuisine13Web.CalendarLive do
     new_week_start = Date.add(socket.assigns.week_start, 7)
     new_week_end = Date.add(socket.assigns.week_end, 7)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
 
     {:noreply,
      socket
      |> assign(:week_start, new_week_start)
      |> assign(:week_end, new_week_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -70,8 +70,7 @@ defmodule Cuisine13Web.CalendarLive do
      socket
      |> assign(:show_add_modal, true)
      |> assign(:selected_date, date)
-     |> assign(:selected_meal_type, meal_type)
-    }
+     |> assign(:selected_meal_type, meal_type)}
   end
 
   @impl true
@@ -92,11 +91,12 @@ defmodule Cuisine13Web.CalendarLive do
 
     case Planning.create_planned_meal(attrs) do
       {:ok, _planned_meal} ->
-        planned_meals = Planning.list_planned_meals(
-          socket.assigns.household.id,
-          socket.assigns.week_start,
-          socket.assigns.week_end
-        )
+        planned_meals =
+          Planning.list_planned_meals(
+            socket.assigns.household.id,
+            socket.assigns.week_start,
+            socket.assigns.week_end
+          )
 
         # Auto-regenerate grocery list for upcoming meals
         Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
@@ -104,8 +104,7 @@ defmodule Cuisine13Web.CalendarLive do
         {:noreply,
          socket
          |> assign(:planned_meals, planned_meals)
-         |> assign(:show_add_modal, false)
-        }
+         |> assign(:show_add_modal, false)}
 
       {:error, _changeset} ->
         {:noreply, socket}
@@ -117,11 +116,12 @@ defmodule Cuisine13Web.CalendarLive do
     planned_meal = Planning.get_planned_meal!(id)
     {:ok, _} = Planning.delete_planned_meal(planned_meal)
 
-    planned_meals = Planning.list_planned_meals(
-      socket.assigns.household.id,
-      socket.assigns.week_start,
-      socket.assigns.week_end
-    )
+    planned_meals =
+      Planning.list_planned_meals(
+        socket.assigns.household.id,
+        socket.assigns.week_start,
+        socket.assigns.week_end
+      )
 
     # Auto-regenerate grocery list for upcoming meals
     Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
@@ -137,7 +137,7 @@ defmodule Cuisine13Web.CalendarLive do
       <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <h1 class="text-2xl font-bold text-white">
               Meal Calendar
             </h1>
           </div>
@@ -179,11 +179,11 @@ defmodule Cuisine13Web.CalendarLive do
             <%= for day_offset <- 0..6 do %>
               <% date = Date.add(@week_start, day_offset) %>
               <% is_today = date == Date.utc_today() %>
-              <div class={"text-center py-3 border-r border-gray-800 last:border-r-0 #{if is_today, do: "bg-purple-600", else: "bg-gray-800"}"}>
+              <div class={"text-center py-3 border-r border-gray-800 last:border-r-0 #{if is_today, do: "bg-blue-600", else: "bg-gray-800"}"}>
                 <div class="text-xs font-medium uppercase text-gray-400">
                   <%= Calendar.strftime(date, "%a") %>
                 </div>
-                <div class={"text-xl font-bold #{if is_today, do: "text-white", else: "text-purple-400"}"}>
+                <div class={"text-xl font-bold #{if is_today, do: "text-white", else: "text-blue-500"}"}>
                   <%= Calendar.strftime(date, "%d") %>
                 </div>
               </div>
@@ -201,13 +201,13 @@ defmodule Cuisine13Web.CalendarLive do
                 <% meals = get_meals_for_date_and_type(@planned_meals, date, meal_type) %>
                 <% is_today = date == Date.utc_today() %>
 
-                <div class={"py-2 px-1 border-r border-gray-800 last:border-r-0 min-h-[60px] #{if is_today, do: "bg-purple-900/20", else: ""}"}>
+                <div class={"py-2 px-1 border-r border-gray-800 last:border-r-0 min-h-[60px] #{if is_today, do: "bg-blue-900/20", else: ""}"}>
                   <%= if Enum.empty?(meals) do %>
                     <button
                       phx-click="open_add_modal"
                       phx-value-date={Date.to_iso8601(date)}
                       phx-value-meal-type={meal_type}
-                      class="w-full h-full flex items-center justify-center text-gray-600 hover:text-purple-400 transition-colors"
+                      class="w-full h-full flex items-center justify-center text-gray-600 hover:text-blue-500 transition-colors"
                     >
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -280,7 +280,7 @@ defmodule Cuisine13Web.CalendarLive do
               <%= if Enum.empty?(@saved_recipes) do %>
                 <div class="text-center py-8">
                   <p class="text-gray-400 mb-4">No saved recipes yet</p>
-                  <%= live_redirect to: "/", class: "text-purple-400 hover:text-purple-300" do %>
+                  <%= live_redirect to: "/", class: "text-blue-500 hover:text-blue-400" do %>
                     Browse recipes →
                   <% end %>
                 </div>
@@ -295,7 +295,7 @@ defmodule Cuisine13Web.CalendarLive do
                       <%= if recipe.image_url do %>
                         <img src={recipe.image_url} alt={recipe.title} class="w-16 h-16 object-cover rounded-lg" />
                       <% else %>
-                        <div class="w-16 h-16 bg-gradient-to-br from-purple-600 to-pink-600 rounded-lg flex items-center justify-center text-2xl">
+                        <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-blue-400 rounded-lg flex items-center justify-center text-2xl">
                           🍽️
                         </div>
                       <% end %>
@@ -358,7 +358,7 @@ defmodule Cuisine13Web.CalendarLive do
             </svg>
             <span class="text-xs font-medium">Saved</span>
           <% end %>
-          <a href="/calendar" class="flex flex-col items-center gap-1 text-purple-400 transition-colors">
+          <a href="/calendar" class="flex flex-col items-center gap-1 text-blue-500 transition-colors">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
             </svg>

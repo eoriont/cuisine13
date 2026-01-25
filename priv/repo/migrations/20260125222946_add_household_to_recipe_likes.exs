@@ -7,6 +7,9 @@ defmodule Cuisine13.Repo.Migrations.AddHouseholdToRecipeLikes do
     end
 
     create index(:recipe_likes, [:household_id])
-    create unique_index(:recipe_likes, [:household_id, :recipe_id], name: :recipe_likes_household_recipe_index)
+
+    create unique_index(:recipe_likes, [:household_id, :recipe_id],
+             name: :recipe_likes_household_recipe_index
+           )
   end
 end

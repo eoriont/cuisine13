@@ -116,14 +116,16 @@ defmodule Cuisine13Web.GroceriesLive do
   @impl true
   def handle_event("validate_item", %{"item" => item_params}, socket) do
     # Handle switching to custom unit mode when "custom" is selected
-    new_item = case item_params["unit"] do
-      "custom" ->
-        item_params
-        |> Map.put("unit_type", "custom")
-        |> Map.put("unit", "")
-      _ ->
-        item_params
-    end
+    new_item =
+      case item_params["unit"] do
+        "custom" ->
+          item_params
+          |> Map.put("unit_type", "custom")
+          |> Map.put("unit", "")
+
+        _ ->
+          item_params
+      end
 
     {:noreply, assign(socket, :new_item, new_item)}
   end
@@ -163,7 +165,7 @@ defmodule Cuisine13Web.GroceriesLive do
       <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-2xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <h1 class="text-2xl font-bold text-white">
               Grocery List
             </h1>
             <div class="flex gap-2">
@@ -192,7 +194,7 @@ defmodule Cuisine13Web.GroceriesLive do
               <button
                 type="button"
                 phx-click="open_add_modal"
-                class="p-3 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+                class="p-3 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Add item"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,7 +216,7 @@ defmodule Cuisine13Web.GroceriesLive do
             <button
               type="button"
               phx-click="open_add_modal"
-              class="px-6 py-4 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-semibold rounded-lg transition-colors min-h-[48px]"
+              class="px-6 py-4 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 text-white font-semibold rounded-lg transition-colors min-h-[48px]"
             >
               Add Your First Item
             </button>
@@ -223,13 +225,13 @@ defmodule Cuisine13Web.GroceriesLive do
           <!-- Stats -->
           <div class="grid grid-cols-2 gap-4 mb-6">
             <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-              <div class="text-2xl font-bold text-purple-400">
+              <div class="text-2xl font-bold text-blue-500">
                 <%= Enum.count(@grocery_items, & &1.is_purchased) %>/<%= Enum.count(@grocery_items) %>
               </div>
               <div class="text-sm text-gray-400">Purchased</div>
             </div>
             <div class="bg-gray-900 rounded-xl p-4 border border-gray-800">
-              <div class="text-2xl font-bold text-pink-400">
+              <div class="text-2xl font-bold text-blue-400">
                 <%= Enum.count(@items_by_category) %>
               </div>
               <div class="text-sm text-gray-400">Categories</div>
@@ -261,7 +263,7 @@ defmodule Cuisine13Web.GroceriesLive do
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
                           </svg>
                         <% else %>
-                          <svg class="w-6 h-6 text-gray-600 hover:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <svg class="w-6 h-6 text-gray-600 hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <circle cx="12" cy="12" r="10" stroke-width="2"/>
                           </svg>
                         <% end %>
@@ -276,7 +278,7 @@ defmodule Cuisine13Web.GroceriesLive do
                             <span><%= format_quantity(item.quantity) %> <%= item.unit %></span>
                           <% end %>
                           <%= if item.needed_by_date do %>
-                            <span class="text-purple-400">
+                            <span class="text-blue-500">
                               • Need by <%= Calendar.strftime(item.needed_by_date, "%b %d") %>
                             </span>
                           <% end %>
@@ -288,10 +290,10 @@ defmodule Cuisine13Web.GroceriesLive do
                           <button
                             phx-click="add_to_pantry"
                             phx-value-id={item.id}
-                            class="flex-shrink-0 p-2 hover:bg-purple-500/20 rounded-lg transition-colors group"
+                            class="flex-shrink-0 p-2 hover:bg-blue-500/20 rounded-lg transition-colors group"
                             title="Add to pantry"
                           >
-                            <svg class="w-5 h-5 text-gray-400 group-hover:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg class="w-5 h-5 text-gray-400 group-hover:text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
                             </svg>
                           </button>
@@ -343,7 +345,7 @@ defmodule Cuisine13Web.GroceriesLive do
                   type="text"
                   name="item[name]"
                   value={@new_item["name"] || ""}
-                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                   required
                 />
               </div>
@@ -356,7 +358,7 @@ defmodule Cuisine13Web.GroceriesLive do
                     step="0.01"
                     name="item[quantity]"
                     value={@new_item["quantity"] || ""}
-                    class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -367,13 +369,13 @@ defmodule Cuisine13Web.GroceriesLive do
                       name="item[unit]"
                       value={@new_item["custom_unit"] || ""}
                       placeholder="Enter custom unit"
-                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                     />
                     <input type="hidden" name="item[unit_type]" value="custom" />
                   <% else %>
                     <select
                       name="item[unit]"
-                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                     >
                       <option value="">Select unit</option>
                       <optgroup label="Count">
@@ -421,7 +423,7 @@ defmodule Cuisine13Web.GroceriesLive do
                 <label class="block text-sm font-medium text-gray-300 mb-2">Category</label>
                 <select
                   name="item[category]"
-                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                 >
                   <option value="">Select category</option>
                   <option value="produce">Produce</option>
@@ -440,7 +442,7 @@ defmodule Cuisine13Web.GroceriesLive do
                   type="date"
                   name="item[needed_by_date]"
                   value={@new_item["needed_by_date"] || ""}
-                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-blue-500 focus:outline-none"
                 />
               </div>
 
@@ -454,7 +456,7 @@ defmodule Cuisine13Web.GroceriesLive do
                 </button>
                 <button
                   type="submit"
-                  class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+                  class="flex-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors"
                 >
                   Add Item
                 </button>
@@ -503,11 +505,20 @@ defmodule Cuisine13Web.GroceriesLive do
       float_val == Float.round(float_val) ->
         float_val |> trunc() |> to_string()
 
-      abs(float_val - 0.25) < 0.01 -> "1/4"
-      abs(float_val - 0.33) < 0.02 -> "1/3"
-      abs(float_val - 0.5) < 0.01 -> "1/2"
-      abs(float_val - 0.67) < 0.02 -> "2/3"
-      abs(float_val - 0.75) < 0.01 -> "3/4"
+      abs(float_val - 0.25) < 0.01 ->
+        "1/4"
+
+      abs(float_val - 0.33) < 0.02 ->
+        "1/3"
+
+      abs(float_val - 0.5) < 0.01 ->
+        "1/2"
+
+      abs(float_val - 0.67) < 0.02 ->
+        "2/3"
+
+      abs(float_val - 0.75) < 0.01 ->
+        "3/4"
 
       float_val > 1 ->
         whole = trunc(float_val)
@@ -559,7 +570,7 @@ defmodule Cuisine13Web.GroceriesLive do
             </svg>
             <span class="text-xs font-medium">Calendar</span>
           <% end %>
-          <a href="/groceries" class="flex flex-col items-center gap-1 text-purple-400 transition-colors">
+          <a href="/groceries" class="flex flex-col items-center gap-1 text-blue-500 transition-colors">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path d="M3 1a1 1 0 000 2h1.22l.305 1.222a.997.997 0 00.01.042l1.358 5.43-.893.892C3.74 11.846 4.632 14 6.414 14H15a1 1 0 000-2H6.414l1-1H14a1 1 0 00.894-.553l3-6A1 1 0 0017 3H6.28l-.31-1.243A1 1 0 005 1H3zM16 16.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM6.5 18a1.5 1.5 0 100-3 1.5 1.5 0 000 3z"/>
             </svg>
