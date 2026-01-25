@@ -9,6 +9,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <meta name="theme-color" content="#030712" id="theme-color-meta"/>
     <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
+    <!-- Inter font from Google Fonts - clean, professional typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
     <script>
       // Theme initialization - runs before page render to prevent flash
@@ -140,6 +144,32 @@
       /* Ensure modals respect safe areas */
       .mobile-modal {
         padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+
+      /* Inter font family - clean, professional typography */
+      html, body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Typography scale - Palantir-inspired clean hierarchy */
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+      }
+
+      /* Body text optimization */
+      p, span, div {
+        letter-spacing: -0.011em;
+      }
+
+      /* Small text refinement */
+      .text-xs, .text-sm {
+        letter-spacing: 0;
       }
 
       /* Smooth scrolling on iOS */
