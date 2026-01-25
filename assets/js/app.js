@@ -22,7 +22,7 @@ import "../css/app.css"
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
+import {Socket, LongPoll} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
@@ -31,13 +31,11 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 // Detect if we're on iOS
 let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
-let liveSocket = new LiveSocket("/live", Socket, {
+// Socket options
+let socketOpts = {
   params: {_csrf_token: csrfToken},
-  // Use longpoll on iOS as fallback if websocket fails
-  transport: isIOS ? undefined : undefined,
   dom: {
     onBeforeElUpdated(from, to) {
-      // Preserve Alpine.js state
       if (from._x_dataStack) {
         window.Alpine?.clone(from, to)
       }
@@ -55,15 +53,53 @@ let liveSocket = new LiveSocket("/live", Socket, {
       }
     }
   }
-})
+}
+
+// Force longpoll on iOS - WebSocket over Tailscale/VPN is unreliable on mobile Safari
+if (isIOS) {
+  console.log("iOS detected - using LongPoll transport")
+  socketOpts.transport = LongPoll
+}
+
+let liveSocket = new LiveSocket("/live", Socket, socketOpts)
+
+// Enable debug in development
+liveSocket.enableDebug()
 
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
-// Connect with reconnect handling for mobile
+// Connect and show connection status
 liveSocket.connect()
+
+// Add connection status indicator for debugging
+function updateConnectionStatus() {
+  let indicator = document.getElementById('lv-connection-status')
+  if (!indicator) {
+    indicator = document.createElement('div')
+    indicator.id = 'lv-connection-status'
+    indicator.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);padding:4px 12px;border-radius:0 0 8px 8px;font-size:12px;z-index:9999;'
+    document.body.appendChild(indicator)
+  }
+
+  if (liveSocket.isConnected()) {
+    indicator.textContent = 'Connected'
+    indicator.style.background = '#22c55e'
+    indicator.style.color = 'white'
+    setTimeout(() => { indicator.style.display = 'none' }, 2000)
+  } else {
+    indicator.textContent = 'Connecting...'
+    indicator.style.background = '#eab308'
+    indicator.style.color = 'black'
+    indicator.style.display = 'block'
+  }
+}
+
+// Check connection status periodically
+setInterval(updateConnectionStatus, 1000)
+updateConnectionStatus()
 
 // Handle visibility change (iOS Safari suspends websockets when tab is backgrounded)
 document.addEventListener("visibilitychange", () => {
