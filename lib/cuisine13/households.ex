@@ -24,7 +24,8 @@ defmodule Cuisine13.Households do
   @doc """
   Gets a single household.
   """
-  def get_household!(id), do: Repo.get!(Household, id) |> Repo.preload([:users, :household_memberships])
+  def get_household!(id),
+    do: Repo.get!(Household, id) |> Repo.preload([:users, :household_memberships])
 
   @doc """
   Gets a household by invite code.

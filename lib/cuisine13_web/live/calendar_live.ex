@@ -37,14 +37,14 @@ defmodule Cuisine13Web.CalendarLive do
     new_week_start = Date.add(socket.assigns.week_start, -7)
     new_week_end = Date.add(socket.assigns.week_end, -7)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
 
     {:noreply,
      socket
      |> assign(:week_start, new_week_start)
      |> assign(:week_end, new_week_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -52,14 +52,14 @@ defmodule Cuisine13Web.CalendarLive do
     new_week_start = Date.add(socket.assigns.week_start, 7)
     new_week_end = Date.add(socket.assigns.week_end, 7)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
 
     {:noreply,
      socket
      |> assign(:week_start, new_week_start)
      |> assign(:week_end, new_week_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -70,8 +70,7 @@ defmodule Cuisine13Web.CalendarLive do
      socket
      |> assign(:show_add_modal, true)
      |> assign(:selected_date, date)
-     |> assign(:selected_meal_type, meal_type)
-    }
+     |> assign(:selected_meal_type, meal_type)}
   end
 
   @impl true
@@ -92,11 +91,12 @@ defmodule Cuisine13Web.CalendarLive do
 
     case Planning.create_planned_meal(attrs) do
       {:ok, _planned_meal} ->
-        planned_meals = Planning.list_planned_meals(
-          socket.assigns.household.id,
-          socket.assigns.week_start,
-          socket.assigns.week_end
-        )
+        planned_meals =
+          Planning.list_planned_meals(
+            socket.assigns.household.id,
+            socket.assigns.week_start,
+            socket.assigns.week_end
+          )
 
         # Auto-regenerate grocery list for upcoming meals
         Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
@@ -104,8 +104,7 @@ defmodule Cuisine13Web.CalendarLive do
         {:noreply,
          socket
          |> assign(:planned_meals, planned_meals)
-         |> assign(:show_add_modal, false)
-        }
+         |> assign(:show_add_modal, false)}
 
       {:error, _changeset} ->
         {:noreply, socket}
@@ -117,11 +116,12 @@ defmodule Cuisine13Web.CalendarLive do
     planned_meal = Planning.get_planned_meal!(id)
     {:ok, _} = Planning.delete_planned_meal(planned_meal)
 
-    planned_meals = Planning.list_planned_meals(
-      socket.assigns.household.id,
-      socket.assigns.week_start,
-      socket.assigns.week_end
-    )
+    planned_meals =
+      Planning.list_planned_meals(
+        socket.assigns.household.id,
+        socket.assigns.week_start,
+        socket.assigns.week_end
+      )
 
     # Auto-regenerate grocery list for upcoming meals
     Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)

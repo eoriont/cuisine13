@@ -116,14 +116,16 @@ defmodule Cuisine13Web.GroceriesLive do
   @impl true
   def handle_event("validate_item", %{"item" => item_params}, socket) do
     # Handle switching to custom unit mode when "custom" is selected
-    new_item = case item_params["unit"] do
-      "custom" ->
-        item_params
-        |> Map.put("unit_type", "custom")
-        |> Map.put("unit", "")
-      _ ->
-        item_params
-    end
+    new_item =
+      case item_params["unit"] do
+        "custom" ->
+          item_params
+          |> Map.put("unit_type", "custom")
+          |> Map.put("unit", "")
+
+        _ ->
+          item_params
+      end
 
     {:noreply, assign(socket, :new_item, new_item)}
   end
@@ -503,11 +505,20 @@ defmodule Cuisine13Web.GroceriesLive do
       float_val == Float.round(float_val) ->
         float_val |> trunc() |> to_string()
 
-      abs(float_val - 0.25) < 0.01 -> "1/4"
-      abs(float_val - 0.33) < 0.02 -> "1/3"
-      abs(float_val - 0.5) < 0.01 -> "1/2"
-      abs(float_val - 0.67) < 0.02 -> "2/3"
-      abs(float_val - 0.75) < 0.01 -> "3/4"
+      abs(float_val - 0.25) < 0.01 ->
+        "1/4"
+
+      abs(float_val - 0.33) < 0.02 ->
+        "1/3"
+
+      abs(float_val - 0.5) < 0.01 ->
+        "1/2"
+
+      abs(float_val - 0.67) < 0.02 ->
+        "2/3"
+
+      abs(float_val - 0.75) < 0.01 ->
+        "3/4"
 
       float_val > 1 ->
         whole = trunc(float_val)

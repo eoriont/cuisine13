@@ -11,11 +11,12 @@ defmodule Cuisine13Web.RecipeDetailLive do
     current_user = socket.assigns.current_user
     household = get_household(current_user)
 
-    is_liked = if household do
-      Recipes.household_liked?(recipe.id, household.id)
-    else
-      Recipes.liked?(recipe.id, current_user.id)
-    end
+    is_liked =
+      if household do
+        Recipes.household_liked?(recipe.id, household.id)
+      else
+        Recipes.liked?(recipe.id, current_user.id)
+      end
 
     socket =
       socket
@@ -48,6 +49,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
       else
         Recipes.unlike_recipe(recipe.id, current_user.id)
       end
+
       {:noreply, assign(socket, :is_liked, false)}
     else
       # Like
@@ -56,6 +58,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
       else
         Recipes.like_recipe(recipe.id, current_user.id)
       end
+
       {:noreply, assign(socket, :is_liked, true)}
     end
   end

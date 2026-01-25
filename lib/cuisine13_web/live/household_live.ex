@@ -80,8 +80,11 @@ defmodule Cuisine13Web.HouseholdLive do
     case Households.leave_household(socket.assigns.household.id, socket.assigns.current_user.id) do
       {:ok, _} ->
         # Create a new household for the user
-        {:ok, new_household} = Households.create_household(%{name: "#{socket.assigns.current_user.email}'s Household"})
-        {:ok, _} = Households.add_member(new_household.id, socket.assigns.current_user.id, "admin")
+        {:ok, new_household} =
+          Households.create_household(%{name: "#{socket.assigns.current_user.email}'s Household"})
+
+        {:ok, _} =
+          Households.add_member(new_household.id, socket.assigns.current_user.id, "admin")
 
         {:noreply,
          socket
@@ -89,7 +92,12 @@ defmodule Cuisine13Web.HouseholdLive do
          |> put_flash(:info, "Left household. Created a new one for you.")}
 
       {:error, :last_admin} ->
-        {:noreply, put_flash(socket, :error, "You can't leave - you're the only admin. Add another admin first or delete the household.")}
+        {:noreply,
+         put_flash(
+           socket,
+           :error,
+           "You can't leave - you're the only admin. Add another admin first or delete the household."
+         )}
 
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to leave household")}

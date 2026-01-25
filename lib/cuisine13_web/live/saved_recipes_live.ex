@@ -11,11 +11,12 @@ defmodule Cuisine13Web.SavedRecipesLive do
     household = get_household(current_user)
 
     # Use household-based liked recipes if available, otherwise fall back to user-based
-    recipes = if household do
-      Recipes.list_household_liked_recipes(household.id)
-    else
-      Recipes.list_liked_recipes(current_user.id)
-    end
+    recipes =
+      if household do
+        Recipes.list_household_liked_recipes(household.id)
+      else
+        Recipes.list_liked_recipes(current_user.id)
+      end
 
     socket =
       socket

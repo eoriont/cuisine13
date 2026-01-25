@@ -47,7 +47,8 @@ defmodule Cuisine13Web.FullCalendarLive do
     calendar_start = Date.beginning_of_week(month_start, :monday)
     calendar_end = Date.end_of_week(month_end, :sunday)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
 
     {:noreply,
      socket
@@ -56,8 +57,7 @@ defmodule Cuisine13Web.FullCalendarLive do
      |> assign(:month_end, month_end)
      |> assign(:calendar_start, calendar_start)
      |> assign(:calendar_end, calendar_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -68,7 +68,8 @@ defmodule Cuisine13Web.FullCalendarLive do
     calendar_start = Date.beginning_of_week(month_start, :monday)
     calendar_end = Date.end_of_week(month_end, :sunday)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
+    planned_meals =
+      Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
 
     {:noreply,
      socket
@@ -77,8 +78,7 @@ defmodule Cuisine13Web.FullCalendarLive do
      |> assign(:month_end, month_end)
      |> assign(:calendar_start, calendar_start)
      |> assign(:calendar_end, calendar_end)
-     |> assign(:planned_meals, planned_meals)
-    }
+     |> assign(:planned_meals, planned_meals)}
   end
 
   @impl true
@@ -89,8 +89,7 @@ defmodule Cuisine13Web.FullCalendarLive do
      socket
      |> assign(:show_add_modal, true)
      |> assign(:selected_date, date)
-     |> assign(:selected_meal_type, meal_type)
-    }
+     |> assign(:selected_meal_type, meal_type)}
   end
 
   @impl true
@@ -111,17 +110,17 @@ defmodule Cuisine13Web.FullCalendarLive do
 
     case Planning.create_planned_meal(attrs) do
       {:ok, _planned_meal} ->
-        planned_meals = Planning.list_planned_meals(
-          socket.assigns.household.id,
-          socket.assigns.calendar_start,
-          socket.assigns.calendar_end
-        )
+        planned_meals =
+          Planning.list_planned_meals(
+            socket.assigns.household.id,
+            socket.assigns.calendar_start,
+            socket.assigns.calendar_end
+          )
 
         {:noreply,
          socket
          |> assign(:planned_meals, planned_meals)
-         |> assign(:show_add_modal, false)
-        }
+         |> assign(:show_add_modal, false)}
 
       {:error, _changeset} ->
         {:noreply, socket}
@@ -133,11 +132,12 @@ defmodule Cuisine13Web.FullCalendarLive do
     planned_meal = Planning.get_planned_meal!(id)
     {:ok, _} = Planning.delete_planned_meal(planned_meal)
 
-    planned_meals = Planning.list_planned_meals(
-      socket.assigns.household.id,
-      socket.assigns.calendar_start,
-      socket.assigns.calendar_end
-    )
+    planned_meals =
+      Planning.list_planned_meals(
+        socket.assigns.household.id,
+        socket.assigns.calendar_start,
+        socket.assigns.calendar_end
+      )
 
     {:noreply, assign(socket, :planned_meals, planned_meals)}
   end
