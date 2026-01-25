@@ -10,8 +10,11 @@ defmodule Cuisine13Web.GroceriesLive do
     current_user = socket.assigns.current_user
     household = get_or_create_household(current_user)
 
-    grocery_items = Groceries.list_grocery_items(household.id)
-    items_by_category = Groceries.list_grocery_items_by_category(household.id)
+    # Auto-generate grocery items for upcoming meals (next 2 weeks)
+    Groceries.auto_generate_for_upcoming_meals(household.id, 14)
+
+    grocery_items = Groceries.list_upcoming_grocery_items(household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(household.id)
 
     socket =
       socket
@@ -20,8 +23,6 @@ defmodule Cuisine13Web.GroceriesLive do
       |> assign(:grocery_items, grocery_items)
       |> assign(:items_by_category, items_by_category)
       |> assign(:show_add_modal, false)
-      |> assign(:show_generate_modal, false)
-      |> assign(:filter_date, nil)
       |> assign_new_item_form()
 
     {:ok, socket}
@@ -37,8 +38,8 @@ defmodule Cuisine13Web.GroceriesLive do
       Groceries.mark_purchased(id, socket.assigns.current_user.id)
     end
 
-    grocery_items = Groceries.list_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_grocery_items_by_category(socket.assigns.household.id)
+    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
 
     {:noreply,
      socket
@@ -51,8 +52,8 @@ defmodule Cuisine13Web.GroceriesLive do
     item = Groceries.get_grocery_item!(id)
     {:ok, _} = Groceries.delete_grocery_item(item)
 
-    grocery_items = Groceries.list_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_grocery_items_by_category(socket.assigns.household.id)
+    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
 
     {:noreply,
      socket
@@ -71,13 +72,30 @@ defmodule Cuisine13Web.GroceriesLive do
   end
 
   @impl true
-  def handle_event("open_generate_modal", _params, socket) do
-    {:noreply, assign(socket, :show_generate_modal, true)}
+  def handle_event("refresh_list", _params, socket) do
+    # Regenerate grocery items from upcoming meals
+    Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
+
+    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
+
+    {:noreply,
+     socket
+     |> assign(:grocery_items, grocery_items)
+     |> assign(:items_by_category, items_by_category)}
   end
 
   @impl true
-  def handle_event("close_generate_modal", _params, socket) do
-    {:noreply, assign(socket, :show_generate_modal, false)}
+  def handle_event("clear_purchased", _params, socket) do
+    Groceries.clear_purchased_items(socket.assigns.household.id)
+
+    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
+
+    {:noreply,
+     socket
+     |> assign(:grocery_items, grocery_items)
+     |> assign(:items_by_category, items_by_category)}
   end
 
   @impl true
@@ -97,8 +115,8 @@ defmodule Cuisine13Web.GroceriesLive do
 
     case Groceries.create_grocery_item(attrs) do
       {:ok, _item} ->
-        grocery_items = Groceries.list_grocery_items(socket.assigns.household.id)
-        items_by_category = Groceries.list_grocery_items_by_category(socket.assigns.household.id)
+        grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+        items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
 
         {:noreply,
          socket
@@ -110,23 +128,6 @@ defmodule Cuisine13Web.GroceriesLive do
       {:error, _changeset} ->
         {:noreply, socket}
     end
-  end
-
-  @impl true
-  def handle_event("generate_from_meals", %{"start_date" => start_date, "end_date" => end_date}, socket) do
-    {:ok, start_date} = Date.from_iso8601(start_date)
-    {:ok, end_date} = Date.from_iso8601(end_date)
-
-    {:ok, _items} = Groceries.generate_from_planned_meals(socket.assigns.household.id, start_date, end_date)
-
-    grocery_items = Groceries.list_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_grocery_items_by_category(socket.assigns.household.id)
-
-    {:noreply,
-     socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)
-     |> assign(:show_generate_modal, false)}
   end
 
   @impl true
@@ -142,14 +143,25 @@ defmodule Cuisine13Web.GroceriesLive do
             </h1>
             <div class="flex gap-2">
               <button
-                phx-click="open_generate_modal"
-                class="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
-                title="Generate from meals"
+                phx-click="refresh_list"
+                class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                title="Refresh from calendar"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
                 </svg>
               </button>
+              <%= if Enum.any?(@grocery_items, & &1.is_purchased) do %>
+                <button
+                  phx-click="clear_purchased"
+                  class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  title="Clear purchased items"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                  </svg>
+                </button>
+              <% end %>
               <button
                 phx-click="open_add_modal"
                 class="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
@@ -363,73 +375,6 @@ defmodule Cuisine13Web.GroceriesLive do
         </div>
       <% end %>
 
-      <!-- Generate From Meals Modal -->
-      <%= if @show_generate_modal do %>
-        <div
-          class="fixed inset-0 bg-black/80 z-40"
-          phx-click="close_generate_modal"
-        ></div>
-
-        <div class="fixed inset-x-4 top-1/2 -translate-y-1/2 md:inset-x-auto md:left-1/2 md:-translate-x-1/2 md:w-full md:max-w-md z-50">
-          <div class="bg-gray-900 rounded-2xl shadow-2xl border border-gray-800">
-            <div class="px-6 py-4 border-b border-gray-800 flex items-center justify-between">
-              <h3 class="text-xl font-bold">Generate from Meals</h3>
-              <button
-                phx-click="close_generate_modal"
-                class="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-              >
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                </svg>
-              </button>
-            </div>
-
-            <form phx-submit="generate_from_meals" class="p-6 space-y-4">
-              <p class="text-sm text-gray-400">
-                Generate grocery items from your planned meals within a date range.
-              </p>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">Start Date</label>
-                <input
-                  type="date"
-                  name="start_date"
-                  value={Date.to_iso8601(Date.utc_today())}
-                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div>
-                <label class="block text-sm font-medium text-gray-300 mb-2">End Date</label>
-                <input
-                  type="date"
-                  name="end_date"
-                  value={Date.to_iso8601(Date.add(Date.utc_today(), 7))}
-                  class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                  required
-                />
-              </div>
-
-              <div class="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  phx-click="close_generate_modal"
-                  class="flex-1 px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  class="flex-1 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
-                >
-                  Generate
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      <% end %>
 
       <%= render_nav(assigns) %>
     </div>

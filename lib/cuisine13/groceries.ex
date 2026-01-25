@@ -30,6 +30,60 @@ defmodule Cuisine13.Groceries do
   end
 
   @doc """
+  Returns only upcoming grocery items (for today and future dates).
+  Excludes items from past meals.
+  """
+  def list_upcoming_grocery_items(household_id) do
+    today = Date.utc_today()
+
+    from(gi in GroceryItem,
+      where: gi.household_id == ^household_id,
+      where: is_nil(gi.needed_by_date) or gi.needed_by_date >= ^today,
+      order_by: [asc: gi.category, asc: gi.name]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
+  Returns upcoming grocery items grouped by category.
+  """
+  def list_upcoming_items_by_category(household_id) do
+    list_upcoming_grocery_items(household_id)
+    |> Enum.group_by(& &1.category)
+  end
+
+  @doc """
+  Deletes all purchased grocery items for a household.
+  """
+  def clear_purchased_items(household_id) do
+    from(gi in GroceryItem,
+      where: gi.household_id == ^household_id and gi.is_purchased == true
+    )
+    |> Repo.delete_all()
+  end
+
+  @doc """
+  Auto-generates grocery items for upcoming planned meals.
+  Clears old auto-generated items and regenerates for the specified period ahead.
+  """
+  def auto_generate_for_upcoming_meals(household_id, days_ahead \\ 14) do
+    today = Date.utc_today()
+    end_date = Date.add(today, days_ahead)
+
+    # Delete old auto-generated items from the past
+    from(gi in GroceryItem,
+      where:
+        gi.household_id == ^household_id and
+          not is_nil(gi.ingredient_id) and
+          gi.needed_by_date < ^today
+    )
+    |> Repo.delete_all()
+
+    # Generate items for upcoming meals
+    generate_from_planned_meals(household_id, today, end_date)
+  end
+
+  @doc """
   Gets a single grocery item.
   """
   def get_grocery_item!(id), do: Repo.get!(GroceryItem, id)
