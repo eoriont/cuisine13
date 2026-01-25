@@ -1,7 +1,7 @@
 defmodule Cuisine13Web.CalendarLive do
   use Cuisine13Web, :live_view
 
-  alias Cuisine13.{Households, Planning, Recipes}
+  alias Cuisine13.{Groceries, Households, Planning, Recipes}
 
   on_mount {Cuisine13Web.UserAuth, :ensure_authenticated}
 
@@ -98,6 +98,9 @@ defmodule Cuisine13Web.CalendarLive do
           socket.assigns.week_end
         )
 
+        # Auto-regenerate grocery list for upcoming meals
+        Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
+
         {:noreply,
          socket
          |> assign(:planned_meals, planned_meals)
@@ -119,6 +122,9 @@ defmodule Cuisine13Web.CalendarLive do
       socket.assigns.week_start,
       socket.assigns.week_end
     )
+
+    # Auto-regenerate grocery list for upcoming meals
+    Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
 
     {:noreply, assign(socket, :planned_meals, planned_meals)}
   end
