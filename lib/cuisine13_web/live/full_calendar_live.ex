@@ -150,15 +150,16 @@ defmodule Cuisine13Web.FullCalendarLive do
       <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 py-4">
           <div class="flex items-center justify-between">
-            <%= live_redirect to: "/calendar", class: "text-gray-400 hover:text-white transition-colors" do %>
+            <%= live_redirect to: "/calendar", class: "flex items-center gap-2 text-gray-400 hover:text-white transition-colors" do %>
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
+              <span class="text-sm">Week View</span>
             <% end %>
             <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-              <%= Calendar.strftime(@current_month, "%B %Y") %>
+              Full Calendar
             </h1>
-            <div class="w-6"></div>
+            <div class="w-20"></div>
           </div>
         </div>
       </header>
