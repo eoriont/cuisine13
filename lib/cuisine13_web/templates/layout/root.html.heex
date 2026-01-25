@@ -273,6 +273,95 @@
       };
 
       window.ThemeManager.init();
+
+      // Haptic Feedback for iOS-like experience
+      window.HapticFeedback = {
+        // Check if haptic feedback is supported
+        isSupported: function() {
+          return 'vibrate' in navigator ||
+                 (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic);
+        },
+
+        // Light haptic - for navigation, tab switches
+        light: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
+        },
+
+        // Medium haptic - for selections, toggles
+        medium: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(20);
+          }
+        },
+
+        // Heavy haptic - for confirmations, important actions
+        heavy: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([30, 10, 30]);
+          }
+        },
+
+        // Success pattern
+        success: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([10, 50, 20]);
+          }
+        },
+
+        // Error pattern
+        error: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([50, 30, 50, 30, 50]);
+          }
+        },
+
+        // Initialize haptic feedback on navigation elements
+        init: function() {
+          // Only run on mobile/touch devices
+          if (!('ontouchstart' in window)) return;
+
+          // Add haptic to bottom nav links
+          document.querySelectorAll('.mobile-nav a, .mobile-nav button, nav a').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.light();
+            }, { passive: true });
+          });
+
+          // Add haptic to like/unlike buttons
+          document.querySelectorAll('[phx-click="like_recipe"], [phx-click="unlike_recipe"]').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.medium();
+            }, { passive: true });
+          });
+
+          // Add haptic to action buttons
+          document.querySelectorAll('button[type="submit"], .haptic-medium').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.medium();
+            }, { passive: true });
+          });
+        }
+      };
+
+      // Initialize haptic feedback on DOM ready and after LiveView updates
+      document.addEventListener('DOMContentLoaded', function() {
+        window.HapticFeedback.init();
+      });
+
+      // Re-initialize after LiveView updates
+      if (window.liveSocket) {
+        window.liveSocket.getHooks().HapticInit = {
+          mounted() { window.HapticFeedback.init(); },
+          updated() { window.HapticFeedback.init(); }
+        };
+      }
+
+      // Also listen for phx:page-loading-stop to reinitialize after navigation
+      window.addEventListener('phx:page-loading-stop', function() {
+        window.HapticFeedback.init();
+      });
     </script>
   </body>
 </html>

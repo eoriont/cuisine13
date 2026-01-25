@@ -1,7 +1,40 @@
 {
   "permissions": {
     "allow": [
-      "Bash(mix phx.gen.auth:*)"
+      "Bash(mix phx.gen.auth:*)",
+      "Bash(mix compile:*)",
+      "Bash(/opt/homebrew/bin/mix compile:*)",
+      "Bash(git checkout:*)",
+      "Bash(brew services:*)",
+      "Bash(/opt/homebrew/bin/mix deps.get:*)",
+      "Bash(/opt/homebrew/bin/mix ecto.create:*)",
+      "Bash(/opt/homebrew/opt/postgresql@15/bin/createuser:*)",
+      "Bash(/opt/homebrew/bin/mix ecto.migrate:*)",
+      "Bash(curl:*)",
+      "Bash(/opt/homebrew/bin/mix run:*)",
+      "Bash(pkill:*)",
+      "Bash(git add:*)",
+      "Bash(git commit -m \"$\\(cat <<''EOF''\nfeat: Allow network access in dev mode for Tailscale\n\n- Changed http binding from 127.0.0.1 to 0.0.0.0\n- Enables access from other devices on Tailscale network\n\nCo-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>\nEOF\n\\)\")",
+      "Bash(git merge:*)",
+      "Bash(git fetch:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)",
+      "Bash(git stash pop:*)",
+      "Bash(/opt/homebrew/bin/mix ecto.gen.migration:*)",
+      "Bash(mix ecto.migrate:*)",
+      "Bash(mix phx.server:*)",
+      "Bash(git commit:*)",
+      "Bash(grep:*)",
+      "Bash(mix assets.deploy:*)",
+      "Bash(mix esbuild:*)",
+      "Bash(NODE_PATH=deps mix esbuild:*)",
+      "Bash(mix test:*)",
+      "Bash(git push:*)",
+      "Bash(mix format:*)",
+      "Bash(mix phx.routes:*)",
+      "Bash(npm run build:*)",
+      "Bash(npx tailwindcss:*)",
+      "Bash(mix phx.digest:*)"
     ]
   }
 }
