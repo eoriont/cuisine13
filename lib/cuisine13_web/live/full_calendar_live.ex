@@ -1,4 +1,4 @@
-defmodule Cuisine13Web.CalendarLive do
+defmodule Cuisine13Web.FullCalendarLive do
   use Cuisine13Web, :live_view
 
   alias Cuisine13.{Households, Planning, Recipes}
@@ -11,18 +11,25 @@ defmodule Cuisine13Web.CalendarLive do
     household = get_or_create_household(current_user)
 
     today = Date.utc_today()
-    week_start = Date.beginning_of_week(today, :monday)
-    week_end = Date.add(week_start, 6)
+    month_start = Date.beginning_of_month(today)
+    month_end = Date.end_of_month(today)
 
-    planned_meals = Planning.list_planned_meals(household.id, week_start, week_end)
+    # Get the full calendar range (including days from prev/next month to fill the grid)
+    calendar_start = Date.beginning_of_week(month_start, :monday)
+    calendar_end = Date.end_of_week(month_end, :sunday)
+
+    planned_meals = Planning.list_planned_meals(household.id, calendar_start, calendar_end)
     saved_recipes = Recipes.list_liked_recipes(current_user.id)
 
     socket =
       socket
-      |> assign(:page_title, "Meal Calendar")
+      |> assign(:page_title, "Full Calendar")
       |> assign(:household, household)
-      |> assign(:week_start, week_start)
-      |> assign(:week_end, week_end)
+      |> assign(:current_month, today)
+      |> assign(:month_start, month_start)
+      |> assign(:month_end, month_end)
+      |> assign(:calendar_start, calendar_start)
+      |> assign(:calendar_end, calendar_end)
       |> assign(:planned_meals, planned_meals)
       |> assign(:saved_recipes, saved_recipes)
       |> assign(:show_add_modal, false)
@@ -33,31 +40,43 @@ defmodule Cuisine13Web.CalendarLive do
   end
 
   @impl true
-  def handle_event("prev_week", _params, socket) do
-    new_week_start = Date.add(socket.assigns.week_start, -7)
-    new_week_end = Date.add(socket.assigns.week_end, -7)
+  def handle_event("prev_month", _params, socket) do
+    new_month = Date.add(socket.assigns.current_month, -30)
+    month_start = Date.beginning_of_month(new_month)
+    month_end = Date.end_of_month(new_month)
+    calendar_start = Date.beginning_of_week(month_start, :monday)
+    calendar_end = Date.end_of_week(month_end, :sunday)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
 
     {:noreply,
      socket
-     |> assign(:week_start, new_week_start)
-     |> assign(:week_end, new_week_end)
+     |> assign(:current_month, new_month)
+     |> assign(:month_start, month_start)
+     |> assign(:month_end, month_end)
+     |> assign(:calendar_start, calendar_start)
+     |> assign(:calendar_end, calendar_end)
      |> assign(:planned_meals, planned_meals)
     }
   end
 
   @impl true
-  def handle_event("next_week", _params, socket) do
-    new_week_start = Date.add(socket.assigns.week_start, 7)
-    new_week_end = Date.add(socket.assigns.week_end, 7)
+  def handle_event("next_month", _params, socket) do
+    new_month = Date.add(socket.assigns.current_month, 30)
+    month_start = Date.beginning_of_month(new_month)
+    month_end = Date.end_of_month(new_month)
+    calendar_start = Date.beginning_of_week(month_start, :monday)
+    calendar_end = Date.end_of_week(month_end, :sunday)
 
-    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, new_week_start, new_week_end)
+    planned_meals = Planning.list_planned_meals(socket.assigns.household.id, calendar_start, calendar_end)
 
     {:noreply,
      socket
-     |> assign(:week_start, new_week_start)
-     |> assign(:week_end, new_week_end)
+     |> assign(:current_month, new_month)
+     |> assign(:month_start, month_start)
+     |> assign(:month_end, month_end)
+     |> assign(:calendar_start, calendar_start)
+     |> assign(:calendar_end, calendar_end)
      |> assign(:planned_meals, planned_meals)
     }
   end
@@ -94,8 +113,8 @@ defmodule Cuisine13Web.CalendarLive do
       {:ok, _planned_meal} ->
         planned_meals = Planning.list_planned_meals(
           socket.assigns.household.id,
-          socket.assigns.week_start,
-          socket.assigns.week_end
+          socket.assigns.calendar_start,
+          socket.assigns.calendar_end
         )
 
         {:noreply,
@@ -116,8 +135,8 @@ defmodule Cuisine13Web.CalendarLive do
 
     planned_meals = Planning.list_planned_meals(
       socket.assigns.household.id,
-      socket.assigns.week_start,
-      socket.assigns.week_end
+      socket.assigns.calendar_start,
+      socket.assigns.calendar_end
     )
 
     {:noreply, assign(socket, :planned_meals, planned_meals)}
@@ -131,18 +150,24 @@ defmodule Cuisine13Web.CalendarLive do
       <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 py-4">
           <div class="flex items-center justify-between">
+            <%= live_redirect to: "/calendar", class: "text-gray-400 hover:text-white transition-colors" do %>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+              </svg>
+            <% end %>
             <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
-              Meal Calendar
+              <%= Calendar.strftime(@current_month, "%B %Y") %>
             </h1>
+            <div class="w-6"></div>
           </div>
         </div>
       </header>
 
       <main class="max-w-7xl mx-auto px-4 py-6">
-        <!-- Week Navigation -->
+        <!-- Month Navigation -->
         <div class="flex items-center justify-between mb-6">
           <button
-            phx-click="prev_week"
+            phx-click="prev_month"
             class="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -150,14 +175,12 @@ defmodule Cuisine13Web.CalendarLive do
             </svg>
           </button>
 
-          <div class="text-center">
-            <p class="text-lg font-semibold">
-              <%= Calendar.strftime(@week_start, "%B %d") %> - <%= Calendar.strftime(@week_end, "%B %d, %Y") %>
-            </p>
-          </div>
+          <h2 class="text-xl font-semibold">
+            <%= Calendar.strftime(@current_month, "%B %Y") %>
+          </h2>
 
           <button
-            phx-click="next_week"
+            phx-click="next_month"
             class="p-2 hover:bg-gray-800 rounded-lg transition-colors"
           >
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -166,81 +189,65 @@ defmodule Cuisine13Web.CalendarLive do
           </button>
         </div>
 
-        <!-- Week At A Glance -->
+        <!-- Calendar Grid -->
         <div class="bg-gray-900 rounded-xl border border-gray-800 overflow-hidden">
-          <!-- Days Header -->
-          <div class="grid grid-cols-7 border-b border-gray-800">
-            <%= for day_offset <- 0..6 do %>
-              <% date = Date.add(@week_start, day_offset) %>
-              <% is_today = date == Date.utc_today() %>
-              <div class={"text-center py-3 border-r border-gray-800 last:border-r-0 #{if is_today, do: "bg-purple-600", else: "bg-gray-800"}"}>
-                <div class="text-xs font-medium uppercase text-gray-400">
-                  <%= Calendar.strftime(date, "%a") %>
-                </div>
-                <div class={"text-xl font-bold #{if is_today, do: "text-white", else: "text-purple-400"}"}>
-                  <%= Calendar.strftime(date, "%d") %>
-                </div>
+          <!-- Day names -->
+          <div class="grid grid-cols-7 bg-gray-800 border-b border-gray-700">
+            <%= for day_name <- ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"] do %>
+              <div class="py-3 text-center text-sm font-semibold text-gray-400">
+                <%= day_name %>
               </div>
             <% end %>
           </div>
 
-          <!-- Meals Grid -->
-          <%= for meal_type <- ["breakfast", "lunch", "dinner"] do %>
-            <div class="grid grid-cols-7 border-b border-gray-800 last:border-b-0">
-              <div class="flex items-center justify-center bg-gray-800/50 py-3 px-2 border-r border-gray-800">
-                <span class="text-sm font-semibold text-gray-400 capitalize"><%= meal_type %></span>
-              </div>
-              <%= for day_offset <- 0..6 do %>
-                <% date = Date.add(@week_start, day_offset) %>
-                <% meals = get_meals_for_date_and_type(@planned_meals, date, meal_type) %>
-                <% is_today = date == Date.utc_today() %>
+          <!-- Calendar days -->
+          <div class="grid grid-cols-7">
+            <%= for date <- get_calendar_dates(@calendar_start, @calendar_end) do %>
+              <% is_current_month = date.month == @current_month.month %>
+              <% is_today = date == Date.utc_today() %>
+              <% day_meals = get_meals_for_date(@planned_meals, date) %>
 
-                <div class={"py-2 px-1 border-r border-gray-800 last:border-r-0 min-h-[60px] #{if is_today, do: "bg-purple-900/20", else: ""}"}>
-                  <%= if Enum.empty?(meals) do %>
-                    <button
-                      phx-click="open_add_modal"
-                      phx-value-date={Date.to_iso8601(date)}
-                      phx-value-meal-type={meal_type}
-                      class="w-full h-full flex items-center justify-center text-gray-600 hover:text-purple-400 transition-colors"
-                    >
-                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                      </svg>
-                    </button>
-                  <% else %>
-                    <div class="space-y-1">
-                      <%= for meal <- meals do %>
-                        <div class="group relative bg-gray-700/50 rounded px-2 py-1 hover:bg-gray-700 transition-colors">
-                          <div class="text-xs text-white line-clamp-1 pr-4">
-                            <%= meal.recipe.title %>
-                          </div>
-                          <button
-                            phx-click="remove_meal"
-                            phx-value-id={meal.id}
-                            class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-red-500 rounded"
-                          >
-                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                          </button>
+              <div class={"border-r border-b border-gray-800 last:border-r-0 p-2 min-h-[120px] #{if is_today, do: "bg-purple-900/20", else: if(is_current_month, do: "bg-gray-900", else: "bg-gray-900/30")}"}>
+                <div class="flex items-center justify-between mb-2">
+                  <span class={"text-sm font-semibold #{if is_today, do: "text-purple-400", else: if(is_current_month, do: "text-white", else: "text-gray-600")}"}>
+                    <%= Calendar.strftime(date, "%d") %>
+                  </span>
+                  <button
+                    phx-click="open_add_modal"
+                    phx-value-date={Date.to_iso8601(date)}
+                    phx-value-meal-type="dinner"
+                    class="opacity-0 hover:opacity-100 p-1 hover:bg-purple-600 rounded transition-all"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="space-y-1">
+                  <%= for {meal_type, meals} <- Enum.group_by(day_meals, & &1.meal_type) do %>
+                    <%= for meal <- meals do %>
+                      <div class="group relative bg-gray-800/50 rounded px-2 py-1 hover:bg-gray-700 transition-colors">
+                        <div class="text-xs text-purple-400 capitalize"><%= meal_type %></div>
+                        <div class="text-xs text-white line-clamp-1 pr-4">
+                          <%= meal.recipe.title %>
                         </div>
-                      <% end %>
-                    </div>
+                        <button
+                          phx-click="remove_meal"
+                          phx-value-id={meal.id}
+                          class="absolute top-0.5 right-0.5 opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-red-500 rounded"
+                        >
+                          <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                          </svg>
+                        </button>
+                      </div>
+                    <% end %>
                   <% end %>
                 </div>
-              <% end %>
-            </div>
-          <% end %>
-        </div>
-
-        <!-- View Full Calendar Link -->
-        <div class="mt-6 text-center">
-          <%= live_redirect to: "/calendar/full", class: "inline-flex items-center gap-2 px-6 py-3 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700" do %>
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-            </svg>
-            <span>View Full Calendar</span>
-          <% end %>
+              </div>
+            <% end %>
+          </div>
         </div>
       </main>
 
@@ -319,7 +326,6 @@ defmodule Cuisine13Web.CalendarLive do
   defp get_or_create_household(user) do
     case Households.list_households_for_user(user.id) do
       [] ->
-        # Create a default household for the user
         {:ok, household} = Households.create_household(%{name: "#{user.email}'s Household"})
         {:ok, _membership} = Households.add_member(household.id, user.id, "admin")
         household
@@ -329,9 +335,13 @@ defmodule Cuisine13Web.CalendarLive do
     end
   end
 
-  defp get_meals_for_date_and_type(planned_meals, date, meal_type) do
+  defp get_calendar_dates(start_date, end_date) do
+    Date.range(start_date, end_date) |> Enum.to_list()
+  end
+
+  defp get_meals_for_date(planned_meals, date) do
     Enum.filter(planned_meals, fn meal ->
-      Date.compare(meal.scheduled_date, date) == :eq && meal.meal_type == meal_type
+      Date.compare(meal.scheduled_date, date) == :eq
     end)
   end
 
@@ -352,12 +362,12 @@ defmodule Cuisine13Web.CalendarLive do
             </svg>
             <span class="text-xs font-medium">Saved</span>
           <% end %>
-          <a href="/calendar" class="flex flex-col items-center gap-1 text-purple-400 transition-colors">
+          <%= live_redirect to: "/calendar", class: "flex flex-col items-center gap-1 text-purple-400 transition-colors" do %>
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
             </svg>
             <span class="text-xs font-medium">Calendar</span>
-          </a>
+          <% end %>
           <%= live_redirect to: "/groceries", class: "flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors" do %>
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
