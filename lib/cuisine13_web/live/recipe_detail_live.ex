@@ -1,41 +1,98 @@
 defmodule Cuisine13Web.RecipeDetailLive do
   use Cuisine13Web, :live_view
 
-  alias Cuisine13.Recipes
+  alias Cuisine13.{Recipes, Households}
 
   on_mount {Cuisine13Web.UserAuth, :ensure_authenticated}
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
     recipe = Recipes.get_recipe!(id)
+    current_user = socket.assigns.current_user
+    household = get_household(current_user)
+
+    is_liked = if household do
+      Recipes.household_liked?(recipe.id, household.id)
+    else
+      Recipes.liked?(recipe.id, current_user.id)
+    end
 
     socket =
       socket
       |> assign(:recipe, recipe)
       |> assign(:page_title, recipe.title)
+      |> assign(:household, household)
+      |> assign(:is_liked, is_liked)
 
     {:ok, socket}
+  end
+
+  defp get_household(user) do
+    case Households.list_households_for_user(user.id) do
+      [household | _] -> household
+      [] -> nil
+    end
+  end
+
+  @impl true
+  def handle_event("toggle_like", _params, socket) do
+    recipe = socket.assigns.recipe
+    current_user = socket.assigns.current_user
+    household = socket.assigns.household
+    is_liked = socket.assigns.is_liked
+
+    if is_liked do
+      # Unlike
+      if household do
+        Recipes.unlike_recipe_for_household(recipe.id, household.id)
+      else
+        Recipes.unlike_recipe(recipe.id, current_user.id)
+      end
+      {:noreply, assign(socket, :is_liked, false)}
+    else
+      # Like
+      if household do
+        Recipes.like_recipe_for_household(recipe.id, current_user.id, household.id)
+      else
+        Recipes.like_recipe(recipe.id, current_user.id)
+      end
+      {:noreply, assign(socket, :is_liked, true)}
+    end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gray-950 text-white pb-20">
+    <div class="min-h-screen bg-gray-950 text-white">
       <!-- Header -->
-      <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-        <div class="max-w-7xl mx-auto px-4 py-4">
+      <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center gap-4">
-            <%= live_redirect to: "/", class: "text-gray-400 hover:text-white transition-colors" do %>
+            <%= live_redirect to: "/", class: "text-gray-400 hover:text-white transition-colors p-1" do %>
               <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
               </svg>
             <% end %>
             <h1 class="text-xl font-semibold flex-1 truncate"><%= @recipe.title %></h1>
+            <button
+              phx-click="toggle_like"
+              class="p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+            >
+              <%= if @is_liked do %>
+                <svg class="w-7 h-7 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                </svg>
+              <% else %>
+                <svg class="w-7 h-7 text-gray-400 hover:text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                </svg>
+              <% end %>
+            </button>
           </div>
         </div>
       </header>
 
-      <main class="max-w-4xl mx-auto px-4 py-6">
+      <main class="max-w-4xl mx-auto px-4 py-6 mobile-content">
         <!-- Recipe Image -->
         <div class="relative h-72 rounded-2xl overflow-hidden mb-6 shadow-2xl">
           <%= if @recipe.image_url do %>

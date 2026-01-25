@@ -27,7 +27,7 @@ defmodule Cuisine13Web.Router do
     live "/calendar/full", FullCalendarLive, :index
     live "/groceries", GroceriesLive, :index
     live "/prep", PrepTimelineLive, :index
-    live "/households", HouseholdLive, :index
+    live "/household", HouseholdLive, :index
   end
 
   # Other scopes may use custom stacks.

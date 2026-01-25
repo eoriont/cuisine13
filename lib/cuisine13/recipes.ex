@@ -79,12 +79,37 @@ defmodule Cuisine13.Recipes do
   end
 
   @doc """
+  Returns the list of liked recipes for a household.
+  All household members share the same saved recipes.
+  """
+  def list_household_liked_recipes(household_id) do
+    from(r in Recipe,
+      join: rl in RecipeLike,
+      on: rl.recipe_id == r.id,
+      where: rl.household_id == ^household_id,
+      order_by: [desc: rl.inserted_at],
+      preload: [:ingredients, :instructions, :prep_tasks]
+    )
+    |> Repo.all()
+  end
+
+  @doc """
   Checks if a user has liked a recipe.
   """
   def liked?(recipe_id, user_id) do
     Repo.exists?(
       from rl in RecipeLike,
         where: rl.recipe_id == ^recipe_id and rl.user_id == ^user_id
+    )
+  end
+
+  @doc """
+  Checks if a household has saved a recipe.
+  """
+  def household_liked?(recipe_id, household_id) do
+    Repo.exists?(
+      from rl in RecipeLike,
+        where: rl.recipe_id == ^recipe_id and rl.household_id == ^household_id
     )
   end
 
@@ -98,11 +123,30 @@ defmodule Cuisine13.Recipes do
   end
 
   @doc """
+  Likes a recipe for a household (shared across all members).
+  """
+  def like_recipe_for_household(recipe_id, user_id, household_id) do
+    %RecipeLike{}
+    |> RecipeLike.changeset(%{recipe_id: recipe_id, user_id: user_id, household_id: household_id})
+    |> Repo.insert()
+  end
+
+  @doc """
   Unlikes a recipe.
   """
   def unlike_recipe(recipe_id, user_id) do
     from(rl in RecipeLike,
       where: rl.recipe_id == ^recipe_id and rl.user_id == ^user_id
+    )
+    |> Repo.delete_all()
+  end
+
+  @doc """
+  Unlikes a recipe for a household.
+  """
+  def unlike_recipe_for_household(recipe_id, household_id) do
+    from(rl in RecipeLike,
+      where: rl.recipe_id == ^recipe_id and rl.household_id == ^household_id
     )
     |> Repo.delete_all()
   end

@@ -115,7 +115,17 @@ defmodule Cuisine13Web.GroceriesLive do
 
   @impl true
   def handle_event("validate_item", %{"item" => item_params}, socket) do
-    {:noreply, assign(socket, :new_item, item_params)}
+    # Handle switching to custom unit mode when "custom" is selected
+    new_item = case item_params["unit"] do
+      "custom" ->
+        item_params
+        |> Map.put("unit_type", "custom")
+        |> Map.put("unit", "")
+      _ ->
+        item_params
+    end
+
+    {:noreply, assign(socket, :new_item, new_item)}
   end
 
   @impl true
@@ -148,18 +158,19 @@ defmodule Cuisine13Web.GroceriesLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen bg-gray-950 text-white pb-20">
-      <!-- Header -->
-      <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-        <div class="max-w-2xl mx-auto px-4 py-4">
+    <div class="min-h-screen bg-gray-950 text-white">
+      <!-- Header with iOS safe area -->
+      <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+        <div class="max-w-2xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
               Grocery List
             </h1>
             <div class="flex gap-2">
               <button
+                type="button"
                 phx-click="refresh_list"
-                class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                class="p-3 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Refresh from calendar"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -168,8 +179,9 @@ defmodule Cuisine13Web.GroceriesLive do
               </button>
               <%= if Enum.any?(@grocery_items, & &1.is_purchased) do %>
                 <button
+                  type="button"
                   phx-click="clear_purchased"
-                  class="p-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
+                  class="p-3 bg-gray-700 hover:bg-gray-600 active:bg-gray-500 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                   title="Clear purchased items"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -178,8 +190,9 @@ defmodule Cuisine13Web.GroceriesLive do
                 </button>
               <% end %>
               <button
+                type="button"
                 phx-click="open_add_modal"
-                class="p-2 bg-purple-600 hover:bg-purple-700 rounded-lg transition-colors"
+                class="p-3 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
                 title="Add item"
               >
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,7 +204,7 @@ defmodule Cuisine13Web.GroceriesLive do
         </div>
       </header>
 
-      <main class="max-w-2xl mx-auto px-4 py-6">
+      <main class="max-w-2xl mx-auto px-4 py-6 mobile-content">
         <%= if Enum.empty?(@grocery_items) do %>
           <div class="text-center py-12">
             <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,8 +212,9 @@ defmodule Cuisine13Web.GroceriesLive do
             </svg>
             <p class="text-gray-400 text-lg mb-4">No grocery items yet</p>
             <button
+              type="button"
               phx-click="open_add_modal"
-              class="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition-colors"
+              class="px-6 py-4 bg-purple-600 hover:bg-purple-700 active:bg-purple-800 text-white font-semibold rounded-lg transition-colors min-h-[48px]"
             >
               Add Your First Item
             </button>
@@ -342,18 +356,64 @@ defmodule Cuisine13Web.GroceriesLive do
                     step="0.01"
                     name="item[quantity]"
                     value={@new_item["quantity"] || ""}
-                    class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
                   />
                 </div>
                 <div>
                   <label class="block text-sm font-medium text-gray-300 mb-2">Unit</label>
-                  <input
-                    type="text"
-                    name="item[unit]"
-                    value={@new_item["unit"] || ""}
-                    placeholder="lb, cup, oz..."
-                    class="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
-                  />
+                  <%= if @new_item["unit_type"] == "custom" do %>
+                    <input
+                      type="text"
+                      name="item[unit]"
+                      value={@new_item["custom_unit"] || ""}
+                      placeholder="Enter custom unit"
+                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    />
+                    <input type="hidden" name="item[unit_type]" value="custom" />
+                  <% else %>
+                    <select
+                      name="item[unit]"
+                      class="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white focus:border-purple-500 focus:outline-none"
+                    >
+                      <option value="">Select unit</option>
+                      <optgroup label="Count">
+                        <option value="each" selected={@new_item["unit"] == "each"}>each</option>
+                        <option value="piece" selected={@new_item["unit"] == "piece"}>piece</option>
+                        <option value="dozen" selected={@new_item["unit"] == "dozen"}>dozen</option>
+                        <option value="bunch" selected={@new_item["unit"] == "bunch"}>bunch</option>
+                        <option value="head" selected={@new_item["unit"] == "head"}>head</option>
+                        <option value="clove" selected={@new_item["unit"] == "clove"}>clove</option>
+                      </optgroup>
+                      <optgroup label="Weight">
+                        <option value="oz" selected={@new_item["unit"] == "oz"}>oz</option>
+                        <option value="lb" selected={@new_item["unit"] == "lb"}>lb</option>
+                        <option value="g" selected={@new_item["unit"] == "g"}>g</option>
+                        <option value="kg" selected={@new_item["unit"] == "kg"}>kg</option>
+                      </optgroup>
+                      <optgroup label="Volume">
+                        <option value="tsp" selected={@new_item["unit"] == "tsp"}>tsp</option>
+                        <option value="tbsp" selected={@new_item["unit"] == "tbsp"}>tbsp</option>
+                        <option value="fl oz" selected={@new_item["unit"] == "fl oz"}>fl oz</option>
+                        <option value="cup" selected={@new_item["unit"] == "cup"}>cup</option>
+                        <option value="pint" selected={@new_item["unit"] == "pint"}>pint</option>
+                        <option value="quart" selected={@new_item["unit"] == "quart"}>quart</option>
+                        <option value="gallon" selected={@new_item["unit"] == "gallon"}>gallon</option>
+                        <option value="ml" selected={@new_item["unit"] == "ml"}>ml</option>
+                        <option value="liter" selected={@new_item["unit"] == "liter"}>liter</option>
+                      </optgroup>
+                      <optgroup label="Packaging">
+                        <option value="can" selected={@new_item["unit"] == "can"}>can</option>
+                        <option value="bottle" selected={@new_item["unit"] == "bottle"}>bottle</option>
+                        <option value="jar" selected={@new_item["unit"] == "jar"}>jar</option>
+                        <option value="bag" selected={@new_item["unit"] == "bag"}>bag</option>
+                        <option value="box" selected={@new_item["unit"] == "box"}>box</option>
+                        <option value="package" selected={@new_item["unit"] == "package"}>package</option>
+                        <option value="container" selected={@new_item["unit"] == "container"}>container</option>
+                        <option value="carton" selected={@new_item["unit"] == "carton"}>carton</option>
+                      </optgroup>
+                      <option value="custom">+ Add custom unit</option>
+                    </select>
+                  <% end %>
                 </div>
               </div>
 
@@ -427,6 +487,8 @@ defmodule Cuisine13Web.GroceriesLive do
       "name" => "",
       "quantity" => "",
       "unit" => "",
+      "unit_type" => nil,
+      "custom_unit" => "",
       "category" => "",
       "needed_by_date" => ""
     })
@@ -476,9 +538,9 @@ defmodule Cuisine13Web.GroceriesLive do
 
   defp render_nav(assigns) do
     ~H"""
-    <nav class="fixed bottom-0 left-0 right-0 z-30 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800">
+    <nav class="mobile-nav bg-gray-900/95 backdrop-blur-lg border-t border-gray-800">
       <div class="max-w-2xl mx-auto px-4">
-        <div class="flex items-center justify-around py-3">
+        <div class="flex items-center justify-around pt-2 pb-1">
           <%= live_redirect to: "/", class: "flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors" do %>
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>

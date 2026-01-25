@@ -24,14 +24,27 @@ defmodule Cuisine13.Households do
   @doc """
   Gets a single household.
   """
-  def get_household!(id), do: Repo.get!(Household, id)
+  def get_household!(id), do: Repo.get!(Household, id) |> Repo.preload([:users, :household_memberships])
 
   @doc """
-  Creates a household.
+  Gets a household by invite code.
+  """
+  def get_household_by_invite_code(invite_code) do
+    Repo.get_by(Household, invite_code: invite_code)
+    |> case do
+      nil -> nil
+      household -> Repo.preload(household, [:users, :household_memberships])
+    end
+  end
+
+  @doc """
+  Creates a household with an auto-generated invite code.
   """
   def create_household(attrs \\ %{}) do
+    invite_code = Household.generate_invite_code()
+
     %Household{}
-    |> Household.changeset(attrs)
+    |> Household.changeset(Map.put(attrs, :invite_code, invite_code))
     |> Repo.insert()
   end
 
@@ -42,6 +55,14 @@ defmodule Cuisine13.Households do
     household
     |> Household.changeset(attrs)
     |> Repo.update()
+  end
+
+  @doc """
+  Regenerates the invite code for a household.
+  """
+  def regenerate_invite_code(%Household{} = household) do
+    new_code = Household.generate_invite_code()
+    update_household(household, %{invite_code: new_code})
   end
 
   @doc """
@@ -98,6 +119,65 @@ defmodule Cuisine13.Households do
     Repo.exists?(
       from hm in HouseholdMembership,
         where: hm.household_id == ^household_id and hm.user_id == ^user_id and hm.role == "admin"
+    )
+  end
+
+  @doc """
+  Joins a household using an invite code.
+  Returns {:ok, membership} if successful, {:error, reason} otherwise.
+  """
+  def join_household_by_code(invite_code, user_id) do
+    case get_household_by_invite_code(invite_code) do
+      nil ->
+        {:error, :invalid_code}
+
+      household ->
+        if member?(household.id, user_id) do
+          {:error, :already_member}
+        else
+          add_member(household.id, user_id, "member")
+        end
+    end
+  end
+
+  @doc """
+  Leaves a household. Cannot leave if user is the only admin.
+  """
+  def leave_household(household_id, user_id) do
+    membership =
+      Repo.one(
+        from hm in HouseholdMembership,
+          where: hm.household_id == ^household_id and hm.user_id == ^user_id
+      )
+
+    cond do
+      is_nil(membership) ->
+        {:error, :not_member}
+
+      membership.role == "admin" && count_admins(household_id) == 1 ->
+        {:error, :last_admin}
+
+      true ->
+        Repo.delete(membership)
+    end
+  end
+
+  defp count_admins(household_id) do
+    Repo.aggregate(
+      from(hm in HouseholdMembership,
+        where: hm.household_id == ^household_id and hm.role == "admin"
+      ),
+      :count
+    )
+  end
+
+  @doc """
+  Gets the membership for a user in a household.
+  """
+  def get_membership(household_id, user_id) do
+    Repo.one(
+      from hm in HouseholdMembership,
+        where: hm.household_id == ^household_id and hm.user_id == ^user_id
     )
   end
 end
