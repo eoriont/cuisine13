@@ -20,6 +20,13 @@ if System.get_env("PHX_SERVER") do
   config :cuisine13, Cuisine13Web.Endpoint, server: true
 end
 
+# Allow DATABASE_URL to override config in development (useful for Docker)
+if config_env() == :dev do
+  if database_url = System.get_env("DATABASE_URL") do
+    config :cuisine13, Cuisine13.Repo, url: database_url
+  end
+end
+
 if config_env() == :prod do
   database_url =
     System.get_env("DATABASE_URL") ||
