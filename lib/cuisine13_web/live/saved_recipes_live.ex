@@ -42,7 +42,7 @@ defmodule Cuisine13Web.SavedRecipesLive do
       <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
         <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
-            <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+            <h1 class="text-2xl font-bold text-white">
               Saved Recipes
             </h1>
           </div>
@@ -58,7 +58,7 @@ defmodule Cuisine13Web.SavedRecipesLive do
             </svg>
             <h2 class="text-2xl font-semibold mb-2 text-gray-300">No Saved Recipes</h2>
             <p class="text-gray-500 mb-6">Like recipes to save them here</p>
-            <%= live_redirect to: "/", class: "px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors" do %>
+            <%= live_redirect to: "/", class: "px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors" do %>
               Browse Recipes
             <% end %>
           </div>
@@ -66,19 +66,19 @@ defmodule Cuisine13Web.SavedRecipesLive do
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <%= for recipe <- @recipes do %>
               <%= live_redirect to: "/recipes/#{recipe.id}", class: "block group" do %>
-                <div class="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-purple-500/50">
+                <div class="relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-blue-500/50">
                   <div class="relative h-48 overflow-hidden">
                     <%= if recipe.image_url do %>
                       <img src={recipe.image_url} alt={recipe.title} class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     <% else %>
-                      <div class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                      <div class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
                         <span class="text-5xl">🍽️</span>
                       </div>
                     <% end %>
                     <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>
                   </div>
                   <div class="p-4">
-                    <h3 class="text-lg font-semibold mb-2 text-white group-hover:text-purple-400 transition-colors"><%= recipe.title %></h3>
+                    <h3 class="text-lg font-semibold mb-2 text-white group-hover:text-blue-500 transition-colors"><%= recipe.title %></h3>
                     <div class="flex items-center gap-3 text-sm text-gray-400">
                       <%= if recipe.total_time_minutes do %>
                         <span><%= recipe.total_time_minutes %> min</span>
@@ -111,7 +111,7 @@ defmodule Cuisine13Web.SavedRecipesLive do
             </svg>
             <span class="text-xs font-medium">Feed</span>
           <% end %>
-          <a href="/recipes/saved" class="flex flex-col items-center gap-1 text-purple-400 transition-colors">
+          <a href="/recipes/saved" class="flex flex-col items-center gap-1 text-blue-500 transition-colors">
             <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
               <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
             </svg>

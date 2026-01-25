@@ -101,7 +101,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
           <%= if @recipe.image_url do %>
             <img src={@recipe.image_url} alt={@recipe.title} class="w-full h-full object-cover" />
           <% else %>
-            <div class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+            <div class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
               <span class="text-8xl">🍽️</span>
             </div>
           <% end %>
@@ -111,19 +111,19 @@ defmodule Cuisine13Web.RecipeDetailLive do
         <div class="grid grid-cols-3 gap-4 mb-8">
           <%= if @recipe.total_time_minutes do %>
             <div class="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center">
-              <div class="text-3xl font-bold text-purple-400 mb-1"><%= @recipe.total_time_minutes %></div>
+              <div class="text-3xl font-bold text-blue-500 mb-1"><%= @recipe.total_time_minutes %></div>
               <div class="text-sm text-gray-400">minutes</div>
             </div>
           <% end %>
           <%= if @recipe.servings do %>
             <div class="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center">
-              <div class="text-3xl font-bold text-purple-400 mb-1"><%= @recipe.servings %></div>
+              <div class="text-3xl font-bold text-blue-500 mb-1"><%= @recipe.servings %></div>
               <div class="text-sm text-gray-400">servings</div>
             </div>
           <% end %>
           <%= if @recipe.difficulty do %>
             <div class="bg-gray-900 rounded-xl p-4 border border-gray-800 text-center">
-              <div class="text-3xl font-bold text-purple-400 capitalize mb-1"><%= String.slice(@recipe.difficulty, 0..2) %></div>
+              <div class="text-3xl font-bold text-blue-500 capitalize mb-1"><%= String.slice(@recipe.difficulty, 0..2) %></div>
               <div class="text-sm text-gray-400">difficulty</div>
             </div>
           <% end %>
@@ -139,7 +139,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
         <!-- Ingredients Section -->
         <div class="bg-gray-900 rounded-2xl p-6 mb-6 border border-gray-800">
           <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
             </svg>
             Ingredients
@@ -147,7 +147,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
           <div class="space-y-3">
             <%= for ingredient <- @recipe.ingredients do %>
               <div class="flex items-start gap-3 p-3 rounded-lg hover:bg-gray-800/50 transition-colors">
-                <div class="w-2 h-2 rounded-full bg-purple-400 mt-2 flex-shrink-0"></div>
+                <div class="w-2 h-2 rounded-full bg-blue-500 mt-2 flex-shrink-0"></div>
                 <div class="flex-1">
                   <span class="text-gray-200">
                     <%= if ingredient.quantity do %>
@@ -175,7 +175,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
         <!-- Instructions Section -->
         <div class="bg-gray-900 rounded-2xl p-6 mb-6 border border-gray-800">
           <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-6 h-6 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
             </svg>
             Instructions
@@ -184,7 +184,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
             <%= for instruction <- @recipe.instructions do %>
               <div class="flex gap-4">
                 <div class="flex-shrink-0">
-                  <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center font-bold text-lg">
+                  <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg">
                     <%= instruction.step_number %>
                   </div>
                 </div>
@@ -205,7 +205,7 @@ defmodule Cuisine13Web.RecipeDetailLive do
         </div>
 
         <!-- Add to Calendar Button -->
-        <button class="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg">
+        <button class="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 shadow-lg">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
           </svg>

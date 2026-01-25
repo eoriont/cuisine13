@@ -7,7 +7,7 @@
     <meta name="csrf-token" content={csrf_token_value()}>
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
-    <meta name="theme-color" content="#030712" id="theme-color-meta"/>
+    <meta name="theme-color" content="#0a0a0a" id="theme-color-meta"/>
     <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
     <!-- Inter font from Google Fonts - clean, professional typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
@@ -39,29 +39,29 @@
         --sal: env(safe-area-inset-left);
       }
 
-      /* Theme colors */
+      /* Theme colors - Clean, professional palette */
       :root.dark {
-        --bg-primary: #030712;
-        --bg-secondary: #111827;
-        --bg-tertiary: #1f2937;
-        --text-primary: #ffffff;
-        --text-secondary: #9ca3af;
-        --text-muted: #6b7280;
-        --border-color: #374151;
-        --accent-primary: #a855f7;
-        --accent-secondary: #ec4899;
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #171717;
+        --bg-tertiary: #262626;
+        --text-primary: #fafafa;
+        --text-secondary: #a3a3a3;
+        --text-muted: #737373;
+        --border-color: #262626;
+        --accent-primary: #3b82f6;
+        --accent-secondary: #60a5fa;
       }
 
       :root.light {
         --bg-primary: #ffffff;
-        --bg-secondary: #f9fafb;
-        --bg-tertiary: #f3f4f6;
-        --text-primary: #111827;
-        --text-secondary: #4b5563;
-        --text-muted: #9ca3af;
-        --border-color: #e5e7eb;
-        --accent-primary: #9333ea;
-        --accent-secondary: #db2777;
+        --bg-secondary: #fafafa;
+        --bg-tertiary: #f5f5f5;
+        --text-primary: #0a0a0a;
+        --text-secondary: #525252;
+        --text-muted: #a3a3a3;
+        --border-color: #e5e5e5;
+        --accent-primary: #2563eb;
+        --accent-secondary: #3b82f6;
       }
 
       /* Apply theme colors */
@@ -74,35 +74,65 @@
       .theme-border { border-color: var(--border-color); }
 
       /* Dark mode specific overrides */
-      :root.dark body { background-color: #030712; color: #ffffff; }
-      :root.light body { background-color: #ffffff; color: #111827; }
+      :root.dark body { background-color: #0a0a0a; color: #fafafa; }
+      :root.light body { background-color: #ffffff; color: #0a0a0a; }
 
       /* Light mode overrides for common elements */
       :root.light .bg-gray-950 { background-color: #ffffff; }
-      :root.light .bg-gray-900 { background-color: #f9fafb; }
-      :root.light .bg-gray-900\/95 { background-color: rgba(249, 250, 251, 0.95); }
-      :root.light .bg-gray-800 { background-color: #f3f4f6; }
-      :root.light .bg-gray-800\/50 { background-color: rgba(243, 244, 246, 0.5); }
-      :root.light .bg-gray-700 { background-color: #e5e7eb; }
-      :root.light .bg-gray-700\/50 { background-color: rgba(229, 231, 235, 0.5); }
-      :root.light .text-white { color: #111827; }
-      :root.light .text-gray-400 { color: #6b7280; }
-      :root.light .text-gray-500 { color: #9ca3af; }
-      :root.light .text-gray-300 { color: #4b5563; }
-      :root.light .text-gray-200 { color: #374151; }
-      :root.light .border-gray-800 { border-color: #e5e7eb; }
-      :root.light .border-gray-700 { border-color: #d1d5db; }
-      :root.light .divide-gray-800 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e7eb; }
-      :root.light .hover\:bg-gray-800:hover { background-color: #e5e7eb; }
-      :root.light .hover\:bg-gray-700:hover { background-color: #d1d5db; }
-      :root.light .hover\:text-white:hover { color: #111827; }
+      :root.light .bg-gray-900 { background-color: #fafafa; }
+      :root.light .bg-gray-900\/95 { background-color: rgba(250, 250, 250, 0.95); }
+      :root.light .bg-gray-900\/30 { background-color: rgba(250, 250, 250, 0.3); }
+      :root.light .bg-gray-800 { background-color: #f5f5f5; }
+      :root.light .bg-gray-800\/50 { background-color: rgba(245, 245, 245, 0.5); }
+      :root.light .bg-gray-700 { background-color: #e5e5e5; }
+      :root.light .bg-gray-700\/50 { background-color: rgba(229, 229, 229, 0.5); }
+      :root.light .text-white { color: #0a0a0a; }
+      :root.light .text-gray-400 { color: #737373; }
+      :root.light .text-gray-500 { color: #a3a3a3; }
+      :root.light .text-gray-300 { color: #525252; }
+      :root.light .text-gray-200 { color: #404040; }
+      :root.light .border-gray-800 { border-color: #e5e5e5; }
+      :root.light .border-gray-700 { border-color: #d4d4d4; }
+      :root.light .divide-gray-800 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e5e5; }
+      :root.light .hover\:bg-gray-800:hover { background-color: #e5e5e5; }
+      :root.light .hover\:bg-gray-700:hover { background-color: #d4d4d4; }
+      :root.light .hover\:text-white:hover { color: #0a0a0a; }
       :root.light input, :root.light select, :root.light textarea {
-        background-color: #f9fafb;
-        border-color: #d1d5db;
-        color: #111827;
+        background-color: #fafafa;
+        border-color: #d4d4d4;
+        color: #0a0a0a;
       }
-      :root.light input::placeholder { color: #9ca3af; }
-      :root.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.5); }
+      :root.light input::placeholder { color: #a3a3a3; }
+      :root.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.4); }
+      :root.light .bg-black\/40 { background-color: rgba(255, 255, 255, 0.8); }
+
+      /* Light mode: Fix gradient overlays on recipe cards */
+      :root.light .bg-gradient-to-t.from-gray-900 {
+        background-image: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.5), transparent);
+      }
+      :root.light .from-gray-900 { --tw-gradient-from: rgba(255,255,255,0.95); }
+      :root.light .via-gray-900\/50 { --tw-gradient-stops: var(--tw-gradient-from), rgba(255,255,255,0.5), var(--tw-gradient-to); }
+
+      /* Light mode: Swap purple accents to blue */
+      :root.light .text-purple-400 { color: #3b82f6; }
+      :root.light .text-purple-600 { color: #2563eb; }
+      :root.light .bg-purple-600 { background-color: #2563eb; }
+      :root.light .bg-purple-500 { background-color: #3b82f6; }
+      :root.light .hover\:bg-purple-500:hover { background-color: #3b82f6; }
+      :root.light .hover\:bg-purple-600:hover { background-color: #2563eb; }
+      :root.light .border-purple-500 { border-color: #3b82f6; }
+      :root.light .bg-purple-500\/10 { background-color: rgba(59, 130, 246, 0.1); }
+      :root.light .bg-purple-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
+      :root.light .focus\:border-purple-500:focus { border-color: #3b82f6; }
+      :root.light .focus\:ring-purple-500:focus { --tw-ring-color: #3b82f6; }
+      :root.light .from-purple-400 { --tw-gradient-from: #3b82f6; }
+      :root.light .from-purple-600 { --tw-gradient-from: #2563eb; }
+      :root.light .to-pink-500 { --tw-gradient-to: #60a5fa; }
+      :root.light .to-pink-600 { --tw-gradient-to: #3b82f6; }
+
+      /* Light mode: Keep pink for likes */
+      :root.light .text-pink-500 { color: #ec4899; }
+      :root.light .hover\:text-pink-500:hover { color: #ec4899; }
 
       /* iOS touch fixes */
       * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
@@ -216,7 +246,7 @@
           if (isDark) {
             document.documentElement.classList.remove('light');
             document.documentElement.classList.add('dark');
-            document.getElementById('theme-color-meta').content = '#030712';
+            document.getElementById('theme-color-meta').content = '#0a0a0a';
           } else {
             document.documentElement.classList.remove('dark');
             document.documentElement.classList.add('light');
