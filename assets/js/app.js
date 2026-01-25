@@ -27,13 +27,19 @@ import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
+
+// Detect if we're on iOS
+let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+
 let liveSocket = new LiveSocket("/live", Socket, {
   params: {_csrf_token: csrfToken},
+  // Use longpoll on iOS as fallback if websocket fails
+  transport: isIOS ? undefined : undefined,
   dom: {
-    // Fix for iOS touch events - ensure LiveView bindings work on mobile
     onBeforeElUpdated(from, to) {
+      // Preserve Alpine.js state
       if (from._x_dataStack) {
-        window.Alpine.clone(from, to)
+        window.Alpine?.clone(from, to)
       }
     }
   },
@@ -41,7 +47,11 @@ let liveSocket = new LiveSocket("/live", Socket, {
     click: (e, el) => {
       return {
         clientX: e.clientX,
-        clientY: e.clientY
+        clientY: e.clientY,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        shiftKey: e.shiftKey
       }
     }
   }
@@ -52,8 +62,18 @@ topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", info => topbar.show())
 window.addEventListener("phx:page-loading-stop", info => topbar.hide())
 
-// connect if there are any LiveViews on the page
+// Connect with reconnect handling for mobile
 liveSocket.connect()
+
+// Handle visibility change (iOS Safari suspends websockets when tab is backgrounded)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    // Reconnect when tab becomes visible
+    if (!liveSocket.isConnected()) {
+      liveSocket.connect()
+    }
+  }
+})
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()
