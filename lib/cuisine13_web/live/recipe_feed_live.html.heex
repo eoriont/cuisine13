@@ -128,12 +128,11 @@
                 </button>
 
                 <!-- View Recipe - Secondary Action -->
-                <%= live_redirect to: "/recipes/#{recipe.id}", class: "flex-shrink-0" do %>
-                  <button class="py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                  </button>
+                <%= live_redirect to: "/recipes/#{recipe.id}",
+                  class: "flex-shrink-0 py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700 flex items-center justify-center" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
                 <% end %>
               </div>
             </div>
