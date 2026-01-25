@@ -63,19 +63,6 @@
                 </div>
               <% end %>
 
-              <!-- Add to Calendar Button -->
-              <div class="absolute top-3 right-3">
-                <button
-                  phx-click="open_calendar_modal"
-                  phx-value-recipe-id={recipe.id}
-                  class="p-2 bg-purple-600/90 backdrop-blur-sm rounded-full hover:bg-purple-500 transition-colors shadow-lg"
-                  title="Add to Calendar"
-                >
-                  <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                  </svg>
-                </button>
-              </div>
 
               <!-- Recipe Info on Image -->
               <div class="absolute bottom-0 left-0 right-0 p-4">
@@ -126,15 +113,29 @@
                 </div>
               <% end %>
 
-              <!-- View Recipe Button -->
-              <%= live_redirect to: "/recipes/#{recipe.id}", class: "block w-full" do %>
-                <button class="w-full py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2">
-                  <span>View Recipe</span>
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              <!-- Action Buttons -->
+              <div class="flex gap-2">
+                <!-- Add to Calendar - Primary Action -->
+                <button
+                  phx-click="open_calendar_modal"
+                  phx-value-recipe-id={recipe.id}
+                  class="flex-1 py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                >
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                   </svg>
+                  <span>Add to Calendar</span>
                 </button>
-              <% end %>
+
+                <!-- View Recipe - Secondary Action -->
+                <%= live_redirect to: "/recipes/#{recipe.id}", class: "flex-shrink-0" do %>
+                  <button class="py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                  </button>
+                <% end %>
+              </div>
             </div>
           </div>
         <% end %>
