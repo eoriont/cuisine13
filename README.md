@@ -4,13 +4,15 @@ A social meal planning application that combines recipe discovery (Instagram Ree
 
 ## Features
 
-- **Recipe Feed**: Browse recipes in a vertical scrolling feed (Instagram Reels-style)
+- **Recipe Feed**: Browse recipes in a card grid with like/save functionality
+- **Recipe Likes**: Save recipes with a heart button - shared across household members
 - **Meal Calendar**: Plan meals for the week with your household
-- **Grocery List**: Auto-generated shopping list from planned meals
+- **Grocery List**: Auto-generated shopping list from planned meals with unit dropdown
 - **Prep Timeline**: Track preparation tasks (thaw, marinate, etc.) with reminders
 - **Allergen Awareness**: Tag user allergies and highlight recipes containing allergens
-- **Household Collaboration**: Share meal plans and grocery lists with roommates
-- **Portion Scaling**: Adjust serving sizes and track leftovers
+- **Household Collaboration**: Share meal plans, saved recipes, and grocery lists with roommates via invite codes
+- **Theme Support**: Dark, light, and system theme options
+- **Mobile Optimized**: iOS-friendly with safe area support for notch/Dynamic Island
 
 ## Tech Stack
 
@@ -254,33 +256,54 @@ Then run:
 mix run priv/repo/seeds.exs
 ```
 
-## Next Steps (MVP Implementation)
+## Implemented Features
 
-1. **Create LiveView pages**:
-   - Recipe feed (`/`)
-   - Meal calendar (`/calendar`)
-   - Saved recipes (`/recipes/saved`)
-   - Grocery list (`/groceries`)
-   - Prep timeline (`/prep`)
+### LiveView Pages
+- Recipe feed (`/`) - Card grid with like buttons and add-to-calendar modal
+- Recipe detail (`/recipes/:id`) - Full recipe view with ingredients and instructions
+- Meal calendar (`/calendar`) - Weekly view with meal planning
+- Saved recipes (`/recipes/saved`) - View all liked recipes
+- Grocery list (`/groceries`) - Category-grouped shopping list with check-off
+- Prep timeline (`/prep`) - Preparation task tracking
+- Household management (`/household`) - Invite codes and member management
+- Settings (`/users/settings`) - Theme selector, email/password change
 
-2. **Implement recipe feed**:
-   - Infinite scroll
-   - Like button with live updates
-   - Allergen warnings
+### Recipe Feed
+- Card grid layout with recipe images
+- Like/save button with instant feedback
+- Add to calendar modal with date/meal type selection
+- Allergen warnings for users with allergies
+- Load more pagination
 
-3. **Build calendar interface**:
-   - Weekly/monthly view
-   - Add meal to calendar
-   - Drag-and-drop scheduling
+### Calendar
+- Weekly view with navigation
+- Breakfast/lunch/dinner slots
+- Add meals from feed or saved recipes
 
-4. **Grocery list features**:
-   - Category grouping
-   - Check-off items
-   - Real-time updates
+### Grocery List
+- Auto-generated from planned meals
+- Category grouping (produce, dairy, etc.)
+- Unit dropdown with standard options and custom unit input
+- Check-off items as purchased
+- Refresh from calendar button
 
-5. **Add seed data**:
-   - Sample recipes with images
-   - Common ingredients with allergens
+### Theme System
+- Dark, light, and system theme options
+- Persists in localStorage
+- System option follows device preference
+
+### Mobile Optimization
+- iOS safe area support (notch/Dynamic Island, home indicator)
+- 44px minimum touch targets
+- LongPoll transport fallback for iOS Safari
+
+## Future Enhancements
+
+- Drag-and-drop calendar scheduling
+- Recipe search and filtering
+- Portion scaling calculator
+- Push notifications for prep reminders
+- Recipe import from URLs
 
 ## Production Deployment
 
