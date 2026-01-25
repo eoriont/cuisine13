@@ -1,0 +1,34 @@
+# Git
+.git
+.gitignore
+
+# Mix artifacts
+/_build
+/deps
+*.ez
+
+# Test artifacts
+/cover
+/doc
+
+# Static artifacts
+/priv/static
+
+# Development files
+.elixir_ls
+.vscode
+.idea
+
+# Environment files
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Database
+*.dump
