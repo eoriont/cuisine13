@@ -20,5 +20,5 @@ defmodule Cuisine13Web.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext, otp_app: :cuisine13
+  use Gettext.Backend, otp_app: :cuisine13
 end

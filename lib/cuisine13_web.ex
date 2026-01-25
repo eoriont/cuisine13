@@ -22,7 +22,7 @@ defmodule Cuisine13Web do
       use Phoenix.Controller, namespace: Cuisine13Web
 
       import Plug.Conn
-      import Cuisine13Web.Gettext
+      use Gettext, backend: Cuisine13Web.Gettext
       alias Cuisine13Web.Router.Helpers, as: Routes
     end
   end
@@ -80,7 +80,7 @@ defmodule Cuisine13Web do
   def channel do
     quote do
       use Phoenix.Channel
-      import Cuisine13Web.Gettext
+      use Gettext, backend: Cuisine13Web.Gettext
     end
   end
 
@@ -96,7 +96,7 @@ defmodule Cuisine13Web do
       import Phoenix.View
 
       import Cuisine13Web.ErrorHelpers
-      import Cuisine13Web.Gettext
+      use Gettext, backend: Cuisine13Web.Gettext
       alias Cuisine13Web.Router.Helpers, as: Routes
     end
   end
