@@ -19,7 +19,14 @@ defmodule Cuisine13.Recipes.PrepTask do
     prep_task
     |> cast(attrs, [:task_type, :description, :hours_before, :duration_minutes, :recipe_id])
     |> validate_required([:task_type, :description, :hours_before, :recipe_id])
-    |> validate_inclusion(:task_type, ["thaw", "marinate", "make_component", "soak", "chill", "rest"])
+    |> validate_inclusion(:task_type, [
+      "thaw",
+      "marinate",
+      "make_component",
+      "soak",
+      "chill",
+      "rest"
+    ])
     |> validate_number(:hours_before, greater_than: 0)
     |> validate_number(:duration_minutes, greater_than_or_equal_to: 0)
   end

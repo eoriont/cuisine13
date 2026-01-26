@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: cuisine13_dev
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: .
+      target: dev
+    environment:
+      MIX_ENV: dev
+      DATABASE_URL: postgres://postgres:postgres@db:5432/cuisine13_dev
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE:-development_secret_key_base_please_change_in_production}
+      PHX_HOST: localhost
+      PHX_SERVER: "true"
+      RECOMMENDATION_ENGINE_URL: http://recommendation-engine:8000
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - mix_deps:/app/deps
+      - mix_build:/app/_build
+    depends_on:
+      db:
+        condition: service_healthy
+      recommendation-engine:
+        condition: service_started
+    command: sh -c "mix ecto.create && mix ecto.migrate && mix run priv/repo/seeds.exs && mix phx.server"
+    stdin_open: true
+    tty: true
+
+  recommendation-engine:
+    build:
+      context: ./recommendation_engine
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/cuisine13_dev
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      YELP_API_KEY: ${YELP_API_KEY:-}
+      GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./recommendation_engine/app:/app/app
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  mix_deps:
+  mix_build:

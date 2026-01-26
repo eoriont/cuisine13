@@ -27,7 +27,7 @@ defmodule Cuisine13Web.Router do
     live "/calendar/full", FullCalendarLive, :index
     live "/groceries", GroceriesLive, :index
     live "/prep", PrepTimelineLive, :index
-    live "/households", HouseholdLive, :index
+    live "/household", HouseholdLive, :index
   end
 
   # Other scopes may use custom stacks.
@@ -95,5 +95,10 @@ defmodule Cuisine13Web.Router do
     post "/users/confirm", UserConfirmationController, :create
     get "/users/confirm/:token", UserConfirmationController, :edit
     post "/users/confirm/:token", UserConfirmationController, :update
+  end
+
+  # Calendar feed (no authentication required - uses token in URL)
+  scope "/", Cuisine13Web do
+    get "/calendar/feed/:token", CalendarFeedController, :show
   end
 end

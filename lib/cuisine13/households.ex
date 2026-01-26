@@ -24,14 +24,42 @@ defmodule Cuisine13.Households do
   @doc """
   Gets a single household.
   """
-  def get_household!(id), do: Repo.get!(Household, id)
+  def get_household!(id),
+    do: Repo.get!(Household, id) |> Repo.preload([:users, :household_memberships])
 
   @doc """
-  Creates a household.
+  Gets a household by invite code.
+  """
+  def get_household_by_invite_code(invite_code) do
+    Repo.get_by(Household, invite_code: invite_code)
+    |> case do
+      nil -> nil
+      household -> Repo.preload(household, [:users, :household_memberships])
+    end
+  end
+
+  @doc """
+  Gets a household by calendar feed token.
+  """
+  def get_household_by_feed_token(token) when is_binary(token) do
+    Repo.get_by(Household, calendar_feed_token: token)
+  end
+
+  def get_household_by_feed_token(_), do: nil
+
+  @doc """
+  Creates a household with an auto-generated invite code and calendar feed token.
   """
   def create_household(attrs \\ %{}) do
+    invite_code = Household.generate_invite_code()
+    calendar_feed_token = Household.generate_calendar_feed_token()
+
     %Household{}
-    |> Household.changeset(attrs)
+    |> Household.changeset(
+      attrs
+      |> Map.put(:invite_code, invite_code)
+      |> Map.put(:calendar_feed_token, calendar_feed_token)
+    )
     |> Repo.insert()
   end
 
@@ -43,6 +71,32 @@ defmodule Cuisine13.Households do
     |> Household.changeset(attrs)
     |> Repo.update()
   end
+
+  @doc """
+  Regenerates the invite code for a household.
+  """
+  def regenerate_invite_code(%Household{} = household) do
+    new_code = Household.generate_invite_code()
+    update_household(household, %{invite_code: new_code})
+  end
+
+  @doc """
+  Regenerates the calendar feed token for a household.
+  This invalidates any existing calendar subscriptions.
+  """
+  def regenerate_calendar_feed_token(%Household{} = household) do
+    new_token = Household.generate_calendar_feed_token()
+    update_household(household, %{calendar_feed_token: new_token})
+  end
+
+  @doc """
+  Ensures a household has a calendar feed token, generating one if missing.
+  """
+  def ensure_calendar_feed_token(%Household{calendar_feed_token: nil} = household) do
+    regenerate_calendar_feed_token(household)
+  end
+
+  def ensure_calendar_feed_token(%Household{} = household), do: {:ok, household}
 
   @doc """
   Deletes a household.
@@ -98,6 +152,65 @@ defmodule Cuisine13.Households do
     Repo.exists?(
       from hm in HouseholdMembership,
         where: hm.household_id == ^household_id and hm.user_id == ^user_id and hm.role == "admin"
+    )
+  end
+
+  @doc """
+  Joins a household using an invite code.
+  Returns {:ok, membership} if successful, {:error, reason} otherwise.
+  """
+  def join_household_by_code(invite_code, user_id) do
+    case get_household_by_invite_code(invite_code) do
+      nil ->
+        {:error, :invalid_code}
+
+      household ->
+        if member?(household.id, user_id) do
+          {:error, :already_member}
+        else
+          add_member(household.id, user_id, "member")
+        end
+    end
+  end
+
+  @doc """
+  Leaves a household. Cannot leave if user is the only admin.
+  """
+  def leave_household(household_id, user_id) do
+    membership =
+      Repo.one(
+        from hm in HouseholdMembership,
+          where: hm.household_id == ^household_id and hm.user_id == ^user_id
+      )
+
+    cond do
+      is_nil(membership) ->
+        {:error, :not_member}
+
+      membership.role == "admin" && count_admins(household_id) == 1 ->
+        {:error, :last_admin}
+
+      true ->
+        Repo.delete(membership)
+    end
+  end
+
+  defp count_admins(household_id) do
+    Repo.aggregate(
+      from(hm in HouseholdMembership,
+        where: hm.household_id == ^household_id and hm.role == "admin"
+      ),
+      :count
+    )
+  end
+
+  @doc """
+  Gets the membership for a user in a household.
+  """
+  def get_membership(household_id, user_id) do
+    Repo.one(
+      from hm in HouseholdMembership,
+        where: hm.household_id == ^household_id and hm.user_id == ^user_id
     )
   end
 end

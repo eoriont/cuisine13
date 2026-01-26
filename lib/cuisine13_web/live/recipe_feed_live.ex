@@ -11,6 +11,9 @@ defmodule Cuisine13Web.RecipeFeedLive do
     current_user = socket.assigns.current_user
     household = get_or_create_household(current_user)
 
+    # Get liked recipe IDs for this household
+    liked_recipe_ids = get_liked_recipe_ids(household)
+
     socket =
       socket
       |> assign(:recipes, recipes)
@@ -19,8 +22,14 @@ defmodule Cuisine13Web.RecipeFeedLive do
       |> assign(:household, household)
       |> assign(:show_calendar_modal, false)
       |> assign(:selected_recipe_id, nil)
+      |> assign(:liked_recipe_ids, liked_recipe_ids)
 
     {:ok, socket}
+  end
+
+  defp get_liked_recipe_ids(household) do
+    liked_recipes = Recipes.list_household_liked_recipes(household.id)
+    MapSet.new(liked_recipes, & &1.id)
   end
 
   @impl true
@@ -28,8 +37,7 @@ defmodule Cuisine13Web.RecipeFeedLive do
     {:noreply,
      socket
      |> assign(:show_calendar_modal, true)
-     |> assign(:selected_recipe_id, String.to_integer(recipe_id))
-    }
+     |> assign(:selected_recipe_id, String.to_integer(recipe_id))}
   end
 
   @impl true
@@ -55,12 +63,32 @@ defmodule Cuisine13Web.RecipeFeedLive do
         {:noreply,
          socket
          |> assign(:show_calendar_modal, false)
-         |> put_flash(:info, "Added to calendar!")
-        }
+         |> put_flash(:info, "Added to calendar!")}
 
       {:error, _changeset} ->
         {:noreply, put_flash(socket, :error, "Failed to add to calendar")}
     end
+  end
+
+  @impl true
+  def handle_event("toggle_like", %{"recipe-id" => recipe_id_str}, socket) do
+    recipe_id = String.to_integer(recipe_id_str)
+    current_user = socket.assigns.current_user
+    household = socket.assigns.household
+    liked_recipe_ids = socket.assigns.liked_recipe_ids
+
+    is_liked = MapSet.member?(liked_recipe_ids, recipe_id)
+
+    new_liked_ids =
+      if is_liked do
+        Recipes.unlike_recipe_for_household(recipe_id, household.id)
+        MapSet.delete(liked_recipe_ids, recipe_id)
+      else
+        Recipes.like_recipe_for_household(recipe_id, current_user.id, household.id)
+        MapSet.put(liked_recipe_ids, recipe_id)
+      end
+
+    {:noreply, assign(socket, :liked_recipe_ids, new_liked_ids)}
   end
 
   @impl true
@@ -106,5 +134,9 @@ defmodule Cuisine13Web.RecipeFeedLive do
   defp get_next_week_dates do
     today = Date.utc_today()
     Enum.map(0..6, fn offset -> Date.add(today, offset) end)
+  end
+
+  defp recipe_liked?(recipe, liked_recipe_ids) do
+    MapSet.member?(liked_recipe_ids, recipe.id)
   end
 end

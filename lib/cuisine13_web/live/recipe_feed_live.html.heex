@@ -1,18 +1,18 @@
 <div class="min-h-screen bg-gray-950 text-white">
-  <!-- Header -->
-  <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-    <div class="max-w-7xl mx-auto px-4 py-4">
+  <!-- Header with iOS safe area -->
+  <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3">
       <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+        <h1 class="text-2xl font-bold">
           Cuisine13
         </h1>
         <div class="flex items-center gap-4">
-          <%= live_redirect to: "/recipes/saved", class: "relative" do %>
+          <%= live_redirect to: "/recipes/saved", class: "relative p-2 -m-2" do %>
             <svg class="w-6 h-6 text-gray-400 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
             </svg>
           <% end %>
-          <%= live_redirect to: "/users/settings", class: "relative" do %>
+          <%= live_redirect to: "/users/settings", class: "relative p-2 -m-2" do %>
             <svg class="w-6 h-6 text-gray-400 hover:text-white transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
             </svg>
@@ -33,7 +33,7 @@
     <% else %>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <%= for recipe <- @recipes do %>
-          <div class="group relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-purple-500/50">
+          <div class="group relative bg-gray-900 rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-800 hover:border-blue-500/50">
             <!-- Recipe Image -->
             <div class="relative h-64 overflow-hidden">
               <%= if recipe.image_url do %>
@@ -43,13 +43,30 @@
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
               <% else %>
-                <div class="w-full h-full bg-gradient-to-br from-purple-600 to-pink-600 flex items-center justify-center">
+                <div class="w-full h-full bg-gradient-to-br from-blue-600 to-blue-400 flex items-center justify-center">
                   <span class="text-6xl">🍽️</span>
                 </div>
               <% end %>
 
               <!-- Gradient Overlay -->
               <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/50 to-transparent"></div>
+
+              <!-- Like Button -->
+              <button
+                phx-click="toggle_like"
+                phx-value-recipe-id={recipe.id}
+                class="absolute top-3 right-3 p-2 bg-black/40 backdrop-blur-sm rounded-full transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"
+              >
+                <%= if recipe_liked?(recipe, @liked_recipe_ids) do %>
+                  <svg class="w-6 h-6 text-pink-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/>
+                  </svg>
+                <% else %>
+                  <svg class="w-6 h-6 text-white hover:text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                  </svg>
+                <% end %>
+              </button>
 
               <!-- Allergen Badge -->
               <%= if has_allergens?(recipe, @current_user) do %>
@@ -119,7 +136,7 @@
                 <button
                   phx-click="open_calendar_modal"
                   phx-value-recipe-id={recipe.id}
-                  class="flex-1 py-2.5 px-4 bg-purple-600 hover:bg-purple-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
+                  class="flex-1 py-2.5 px-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg transition-colors flex items-center justify-center gap-2"
                 >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -128,12 +145,11 @@
                 </button>
 
                 <!-- View Recipe - Secondary Action -->
-                <%= live_redirect to: "/recipes/#{recipe.id}", class: "flex-shrink-0" do %>
-                  <button class="py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
-                    </svg>
-                  </button>
+                <%= live_redirect to: "/recipes/#{recipe.id}",
+                  class: "flex-shrink-0 py-2.5 px-4 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-lg transition-colors border border-gray-700 flex items-center justify-center" do %>
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                  </svg>
                 <% end %>
               </div>
             </div>
@@ -192,7 +208,7 @@
                       phx-click="add_to_calendar"
                       phx-value-date={Date.to_iso8601(date)}
                       phx-value-meal-type={meal_type}
-                      class="px-3 py-2 bg-gray-800 hover:bg-purple-600 rounded-lg text-sm font-medium transition-colors capitalize"
+                      class="px-3 py-2 bg-gray-800 hover:bg-blue-600 rounded-lg text-sm font-medium transition-colors capitalize"
                     >
                       <%= meal_type %>
                     </button>
@@ -206,12 +222,12 @@
     </div>
   <% end %>
 
-  <!-- Bottom Navigation -->
-  <nav class="fixed bottom-0 left-0 right-0 z-30 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800">
+  <!-- Bottom Navigation with iOS safe area -->
+  <nav class="mobile-nav bg-gray-900/95 backdrop-blur-lg border-t border-gray-800">
     <div class="max-w-7xl mx-auto px-4">
-      <div class="flex items-center justify-around py-3">
+      <div class="flex items-center justify-around pt-2 pb-1">
         <!-- Feed -->
-        <a href="/" class="flex flex-col items-center gap-1 text-purple-400 transition-colors">
+        <a href="/" class="flex flex-col items-center gap-1 text-blue-500 transition-colors">
           <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
             <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
           </svg>
@@ -253,6 +269,6 @@
     </div>
   </nav>
 
-  <!-- Bottom Padding for Nav -->
-  <div class="h-20"></div>
+  <!-- Bottom Padding for Nav (handled by mobile-content class) -->
+  <div class="mobile-content"></div>
 </div>

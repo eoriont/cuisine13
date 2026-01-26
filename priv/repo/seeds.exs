@@ -12,8 +12,13 @@
 
 alias Cuisine13.Repo
 alias Cuisine13.Recipes.{Recipe, Ingredient, Instruction, PrepTask}
+alias Cuisine13.Planning.PlannedMeal
+alias Cuisine13.Groceries.GroceryItem
 
 # Clear existing data (optional, comment out if you don't want to reset)
+# Delete in order of foreign key dependencies
+Repo.delete_all(GroceryItem)
+Repo.delete_all(PlannedMeal)
 Repo.delete_all(Instruction)
 Repo.delete_all(Ingredient)
 Repo.delete_all(PrepTask)
@@ -86,7 +91,8 @@ Repo.insert_all(Instruction, [
   %{
     recipe_id: carbonara.id,
     step_number: 1,
-    description: "Bring a large pot of salted water to boil and cook spaghetti according to package directions.",
+    description:
+      "Bring a large pot of salted water to boil and cook spaghetti according to package directions.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   },
@@ -107,7 +113,8 @@ Repo.insert_all(Instruction, [
   %{
     recipe_id: carbonara.id,
     step_number: 4,
-    description: "Drain pasta, reserving 1 cup of pasta water. Toss hot pasta with pancetta, then remove from heat and quickly stir in egg mixture, adding pasta water as needed.",
+    description:
+      "Drain pasta, reserving 1 cup of pasta water. Toss hot pasta with pancetta, then remove from heat and quickly stir in egg mixture, adding pasta water as needed.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   }
@@ -188,7 +195,8 @@ Repo.insert_all(Instruction, [
   %{
     recipe_id: tikka.id,
     step_number: 1,
-    description: "Cut chicken into bite-sized pieces and marinate in yogurt and half the spices for at least 2 hours.",
+    description:
+      "Cut chicken into bite-sized pieces and marinate in yogurt and half the spices for at least 2 hours.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   },
@@ -202,14 +210,16 @@ Repo.insert_all(Instruction, [
   %{
     recipe_id: tikka.id,
     step_number: 3,
-    description: "In a large pan, combine tomato sauce, cream, and remaining spices. Simmer for 10 minutes.",
+    description:
+      "In a large pan, combine tomato sauce, cream, and remaining spices. Simmer for 10 minutes.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   },
   %{
     recipe_id: tikka.id,
     step_number: 4,
-    description: "Add grilled chicken to sauce and simmer for 10 more minutes. Serve with rice or naan.",
+    description:
+      "Add grilled chicken to sauce and simmer for 10 more minutes. Serve with rice or naan.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   }
@@ -501,7 +511,8 @@ Repo.insert_all(Instruction, [
   %{
     recipe_id: cookies.id,
     step_number: 4,
-    description: "Drop rounded tablespoons of dough onto baking sheets. Bake for 10-12 minutes until golden.",
+    description:
+      "Drop rounded tablespoons of dough onto baking sheets. Bake for 10-12 minutes until golden.",
     inserted_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second),
     updated_at: NaiveDateTime.utc_now() |> NaiveDateTime.truncate(:second)
   }

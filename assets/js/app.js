@@ -1,6 +1,4 @@
-// We import the CSS which is extracted to its own file by esbuild.
-// Remove this line if you add a your own CSS build pipeline (e.g postcss).
-import "../css/app.css"
+// CSS is handled by Tailwind CLI separately, not imported here
 
 // If you want to use Phoenix channels, run `mix help phx.gen.channel`
 // to get started and then uncomment the line below.
@@ -22,20 +20,100 @@ import "../css/app.css"
 // Include phoenix_html to handle method=PUT/DELETE in forms and buttons.
 import "phoenix_html"
 // Establish Phoenix Socket and LiveView configuration.
-import {Socket} from "phoenix"
+import {Socket, LongPoll} from "phoenix"
 import {LiveSocket} from "phoenix_live_view"
 import topbar from "../vendor/topbar"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+
+// Detect if we're on iOS
+let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
+
+// Socket options
+let socketOpts = {
+  params: {_csrf_token: csrfToken},
+  dom: {
+    onBeforeElUpdated(from, to) {
+      if (from._x_dataStack) {
+        window.Alpine?.clone(from, to)
+      }
+    }
+  },
+  metadata: {
+    click: (e, el) => {
+      return {
+        clientX: e.clientX,
+        clientY: e.clientY,
+        altKey: e.altKey,
+        ctrlKey: e.ctrlKey,
+        metaKey: e.metaKey,
+        shiftKey: e.shiftKey
+      }
+    }
+  }
+}
+
+// Force longpoll on iOS - WebSocket over Tailscale/VPN is unreliable on mobile Safari
+if (isIOS) {
+  console.log("iOS detected - using LongPoll transport")
+  socketOpts.transport = LongPoll
+}
+
+let liveSocket = new LiveSocket("/live", Socket, socketOpts)
+
+// Enable debug in development
+liveSocket.enableDebug()
 
 // Show progress bar on live navigation and form submits
 topbar.config({barColors: {0: "#29d"}, shadowColor: "rgba(0, 0, 0, .3)"})
 window.addEventListener("phx:page-loading-start", info => topbar.show())
-window.addEventListener("phx:page-loading-stop", info => topbar.hide())
+window.addEventListener("phx:page-loading-stop", info => {
+  topbar.hide()
+  // Reinitialize haptic feedback after LiveView navigation
+  if (window.HapticFeedback) {
+    window.HapticFeedback.init()
+  }
+})
 
-// connect if there are any LiveViews on the page
+// Connect and show connection status
 liveSocket.connect()
+
+// Add connection status indicator for debugging
+function updateConnectionStatus() {
+  let indicator = document.getElementById('lv-connection-status')
+  if (!indicator) {
+    indicator = document.createElement('div')
+    indicator.id = 'lv-connection-status'
+    indicator.style.cssText = 'position:fixed;top:0;left:50%;transform:translateX(-50%);padding:4px 12px;border-radius:0 0 8px 8px;font-size:12px;z-index:9999;'
+    document.body.appendChild(indicator)
+  }
+
+  if (liveSocket.isConnected()) {
+    indicator.textContent = 'Connected'
+    indicator.style.background = '#22c55e'
+    indicator.style.color = 'white'
+    setTimeout(() => { indicator.style.display = 'none' }, 2000)
+  } else {
+    indicator.textContent = 'Connecting...'
+    indicator.style.background = '#eab308'
+    indicator.style.color = 'black'
+    indicator.style.display = 'block'
+  }
+}
+
+// Check connection status periodically
+setInterval(updateConnectionStatus, 1000)
+updateConnectionStatus()
+
+// Handle visibility change (iOS Safari suspends websockets when tab is backgrounded)
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    // Reconnect when tab becomes visible
+    if (!liveSocket.isConnected()) {
+      liveSocket.connect()
+    }
+  }
+})
 
 // expose liveSocket on window for web console debug logs and latency simulation:
 // >> liveSocket.enableDebug()

@@ -1,15 +1,367 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
   <head>
     <meta charset="utf-8"/>
     <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"/>
     <meta name="csrf-token" content={csrf_token_value()}>
+    <meta name="apple-mobile-web-app-capable" content="yes"/>
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+    <meta name="theme-color" content="#0a0a0a" id="theme-color-meta"/>
     <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
+    <!-- Inter font from Google Fonts - clean, professional typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link phx-track-static rel="stylesheet" href={Routes.static_path(@conn, "/assets/app.css")}/>
+    <script>
+      // Theme initialization - runs before page render to prevent flash
+      (function() {
+        const stored = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        if (stored === 'light' || (stored === 'system' && !prefersDark) || (!stored && !prefersDark)) {
+          document.documentElement.classList.remove('dark');
+          document.documentElement.classList.add('light');
+        } else {
+          document.documentElement.classList.remove('light');
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <script defer phx-track-static type="text/javascript" src={Routes.static_path(@conn, "/assets/app.js")}></script>
+    <style>
+      /* iOS safe areas for notch/Dynamic Island and home indicator */
+      :root {
+        --sat: env(safe-area-inset-top);
+        --sar: env(safe-area-inset-right);
+        --sab: env(safe-area-inset-bottom);
+        --sal: env(safe-area-inset-left);
+      }
+
+      /* Theme colors - Clean, professional palette */
+      :root.dark {
+        --bg-primary: #0a0a0a;
+        --bg-secondary: #171717;
+        --bg-tertiary: #262626;
+        --text-primary: #fafafa;
+        --text-secondary: #a3a3a3;
+        --text-muted: #737373;
+        --border-color: #262626;
+        --accent-primary: #3b82f6;
+        --accent-secondary: #60a5fa;
+      }
+
+      :root.light {
+        --bg-primary: #ffffff;
+        --bg-secondary: #fafafa;
+        --bg-tertiary: #f5f5f5;
+        --text-primary: #0a0a0a;
+        --text-secondary: #525252;
+        --text-muted: #a3a3a3;
+        --border-color: #e5e5e5;
+        --accent-primary: #2563eb;
+        --accent-secondary: #3b82f6;
+      }
+
+      /* Apply theme colors */
+      .theme-bg-primary { background-color: var(--bg-primary); }
+      .theme-bg-secondary { background-color: var(--bg-secondary); }
+      .theme-bg-tertiary { background-color: var(--bg-tertiary); }
+      .theme-text-primary { color: var(--text-primary); }
+      .theme-text-secondary { color: var(--text-secondary); }
+      .theme-text-muted { color: var(--text-muted); }
+      .theme-border { border-color: var(--border-color); }
+
+      /* Dark mode specific overrides */
+      :root.dark body { background-color: #0a0a0a; color: #fafafa; }
+      :root.light body { background-color: #ffffff; color: #0a0a0a; }
+
+      /* Light mode overrides for common elements */
+      :root.light .bg-gray-950 { background-color: #ffffff; }
+      :root.light .bg-gray-900 { background-color: #fafafa; }
+      :root.light .bg-gray-900\/95 { background-color: rgba(250, 250, 250, 0.95); }
+      :root.light .bg-gray-900\/30 { background-color: rgba(250, 250, 250, 0.3); }
+      :root.light .bg-gray-800 { background-color: #f5f5f5; }
+      :root.light .bg-gray-800\/50 { background-color: rgba(245, 245, 245, 0.5); }
+      :root.light .bg-gray-700 { background-color: #e5e5e5; }
+      :root.light .bg-gray-700\/50 { background-color: rgba(229, 229, 229, 0.5); }
+      :root.light .text-white { color: #0a0a0a; }
+      :root.light .text-gray-400 { color: #737373; }
+      :root.light .text-gray-500 { color: #a3a3a3; }
+      :root.light .text-gray-300 { color: #525252; }
+      :root.light .text-gray-200 { color: #404040; }
+      :root.light .border-gray-800 { border-color: #e5e5e5; }
+      :root.light .border-gray-700 { border-color: #d4d4d4; }
+      :root.light .divide-gray-800 > :not([hidden]) ~ :not([hidden]) { border-color: #e5e5e5; }
+      :root.light .hover\:bg-gray-800:hover { background-color: #e5e5e5; }
+      :root.light .hover\:bg-gray-700:hover { background-color: #d4d4d4; }
+      :root.light .hover\:text-white:hover { color: #0a0a0a; }
+      :root.light input, :root.light select, :root.light textarea {
+        background-color: #fafafa;
+        border-color: #d4d4d4;
+        color: #0a0a0a;
+      }
+      :root.light input::placeholder { color: #a3a3a3; }
+      :root.light .bg-black\/80 { background-color: rgba(0, 0, 0, 0.4); }
+      :root.light .bg-black\/40 { background-color: rgba(255, 255, 255, 0.8); }
+
+      /* Light mode: Fix gradient overlays on recipe cards */
+      :root.light .bg-gradient-to-t.from-gray-900 {
+        background-image: linear-gradient(to top, rgba(255,255,255,0.95), rgba(255,255,255,0.5), transparent);
+      }
+      :root.light .from-gray-900 { --tw-gradient-from: rgba(255,255,255,0.95); }
+      :root.light .via-gray-900\/50 { --tw-gradient-stops: var(--tw-gradient-from), rgba(255,255,255,0.5), var(--tw-gradient-to); }
+
+      /* Light mode: Swap purple accents to blue */
+      :root.light .text-purple-400 { color: #3b82f6; }
+      :root.light .text-purple-600 { color: #2563eb; }
+      :root.light .bg-purple-600 { background-color: #2563eb; }
+      :root.light .bg-purple-500 { background-color: #3b82f6; }
+      :root.light .hover\:bg-purple-500:hover { background-color: #3b82f6; }
+      :root.light .hover\:bg-purple-600:hover { background-color: #2563eb; }
+      :root.light .border-purple-500 { border-color: #3b82f6; }
+      :root.light .bg-purple-500\/10 { background-color: rgba(59, 130, 246, 0.1); }
+      :root.light .bg-purple-500\/20 { background-color: rgba(59, 130, 246, 0.2); }
+      :root.light .focus\:border-purple-500:focus { border-color: #3b82f6; }
+      :root.light .focus\:ring-purple-500:focus { --tw-ring-color: #3b82f6; }
+      :root.light .from-purple-400 { --tw-gradient-from: #3b82f6; }
+      :root.light .from-purple-600 { --tw-gradient-from: #2563eb; }
+      :root.light .to-pink-500 { --tw-gradient-to: #60a5fa; }
+      :root.light .to-pink-600 { --tw-gradient-to: #3b82f6; }
+
+      /* Light mode: Keep pink for likes */
+      :root.light .text-pink-500 { color: #ec4899; }
+      :root.light .hover\:text-pink-500:hover { color: #ec4899; }
+
+      /* iOS touch fixes */
+      * { -webkit-tap-highlight-color: transparent; -webkit-touch-callout: none; }
+      button, a, [phx-click] {
+        touch-action: manipulation;
+        cursor: pointer;
+        -webkit-user-select: none;
+        user-select: none;
+      }
+
+      /* Mobile-optimized touch targets */
+      @media (max-width: 768px) {
+        button, [phx-click], a { min-height: 44px; }
+      }
+
+      /* Sticky header with safe area */
+      .mobile-header {
+        padding-top: max(1rem, env(safe-area-inset-top));
+        position: sticky;
+        top: 0;
+        z-index: 40;
+      }
+
+      /* Bottom nav with safe area for home indicator */
+      .mobile-nav {
+        padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 40;
+      }
+
+      /* Content padding to account for fixed nav */
+      .mobile-content {
+        padding-bottom: calc(5rem + env(safe-area-inset-bottom));
+      }
+
+      /* Ensure modals respect safe areas */
+      .mobile-modal {
+        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+      }
+
+      /* Inter font family - clean, professional typography */
+      html, body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+      }
+
+      /* Typography scale - Palantir-inspired clean hierarchy */
+      h1, h2, h3, h4, h5, h6 {
+        font-weight: 600;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+      }
+
+      /* Body text optimization */
+      p, span, div {
+        letter-spacing: -0.011em;
+      }
+
+      /* Small text refinement */
+      .text-xs, .text-sm {
+        letter-spacing: 0;
+      }
+
+      /* Smooth scrolling on iOS */
+      html {
+        -webkit-overflow-scrolling: touch;
+        scroll-behavior: smooth;
+      }
+
+      /* Prevent body scroll when modal is open */
+      body.modal-open {
+        overflow: hidden;
+        position: fixed;
+        width: 100%;
+      }
+    </style>
   </head>
-  <body class="bg-gray-950 antialiased">
+  <body class="bg-gray-950 antialiased transition-colors duration-200">
     <%= @inner_content %>
+    <script>
+      // iOS Safari fixes
+      document.addEventListener('DOMContentLoaded', function() {
+        // Force clickable recognition
+        document.querySelectorAll('[phx-click]').forEach(function(el) {
+          el.style.cursor = 'pointer';
+        });
+
+        // Add iOS class for platform-specific styles
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+          document.documentElement.classList.add('ios');
+        }
+      });
+
+      // Theme management
+      window.ThemeManager = {
+        setTheme: function(theme) {
+          localStorage.setItem('theme', theme);
+          this.applyTheme(theme);
+        },
+
+        applyTheme: function(theme) {
+          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+          const isDark = theme === 'dark' || (theme === 'system' && prefersDark);
+
+          if (isDark) {
+            document.documentElement.classList.remove('light');
+            document.documentElement.classList.add('dark');
+            document.getElementById('theme-color-meta').content = '#0a0a0a';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            document.getElementById('theme-color-meta').content = '#ffffff';
+          }
+
+          // Dispatch event for LiveView to pick up
+          window.dispatchEvent(new CustomEvent('theme-changed', { detail: { theme: theme, isDark: isDark } }));
+        },
+
+        getTheme: function() {
+          return localStorage.getItem('theme') || 'system';
+        },
+
+        init: function() {
+          // Listen for system preference changes
+          window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            const currentTheme = localStorage.getItem('theme') || 'system';
+            if (currentTheme === 'system') {
+              window.ThemeManager.applyTheme('system');
+            }
+          });
+        }
+      };
+
+      window.ThemeManager.init();
+
+      // Haptic Feedback for iOS-like experience
+      window.HapticFeedback = {
+        // Check if haptic feedback is supported
+        isSupported: function() {
+          return 'vibrate' in navigator ||
+                 (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.haptic);
+        },
+
+        // Light haptic - for navigation, tab switches
+        light: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(10);
+          }
+        },
+
+        // Medium haptic - for selections, toggles
+        medium: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate(20);
+          }
+        },
+
+        // Heavy haptic - for confirmations, important actions
+        heavy: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([30, 10, 30]);
+          }
+        },
+
+        // Success pattern
+        success: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([10, 50, 20]);
+          }
+        },
+
+        // Error pattern
+        error: function() {
+          if ('vibrate' in navigator) {
+            navigator.vibrate([50, 30, 50, 30, 50]);
+          }
+        },
+
+        // Initialize haptic feedback on navigation elements
+        init: function() {
+          // Only run on mobile/touch devices
+          if (!('ontouchstart' in window)) return;
+
+          // Add haptic to bottom nav links
+          document.querySelectorAll('.mobile-nav a, .mobile-nav button, nav a').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.light();
+            }, { passive: true });
+          });
+
+          // Add haptic to like/unlike buttons
+          document.querySelectorAll('[phx-click="like_recipe"], [phx-click="unlike_recipe"]').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.medium();
+            }, { passive: true });
+          });
+
+          // Add haptic to action buttons
+          document.querySelectorAll('button[type="submit"], .haptic-medium').forEach(function(el) {
+            el.addEventListener('touchstart', function() {
+              window.HapticFeedback.medium();
+            }, { passive: true });
+          });
+        }
+      };
+
+      // Initialize haptic feedback on DOM ready and after LiveView updates
+      document.addEventListener('DOMContentLoaded', function() {
+        window.HapticFeedback.init();
+      });
+
+      // Re-initialize after LiveView updates
+      if (window.liveSocket) {
+        window.liveSocket.getHooks().HapticInit = {
+          mounted() { window.HapticFeedback.init(); },
+          updated() { window.HapticFeedback.init(); }
+        };
+      }
+
+      // Also listen for phx:page-loading-stop to reinitialize after navigation
+      window.addEventListener('phx:page-loading-stop', function() {
+        window.HapticFeedback.init();
+      });
+    </script>
   </body>
 </html>
