@@ -2,6 +2,10 @@ from fastapi import APIRouter, Depends, Query
 from pydantic import BaseModel
 from typing import Optional
 from enum import Enum
+import os
+import asyncpg
+
+from ..services.yelp import YelpService, get_yelp_service
 
 router = APIRouter()
 
@@ -9,6 +13,7 @@ router = APIRouter()
 class FeedMode(str, Enum):
     normal = "normal"
     steal = "steal"
+    trending = "trending"
 
 
 class FeedRequest(BaseModel):
@@ -19,17 +24,10 @@ class FeedRequest(BaseModel):
     limit: int = 20
 
 
-class RecipeRecommendation(BaseModel):
-    recipe_id: int
-    title: str
-    image_url: Optional[str]
-    match_score: float  # 0.0 to 1.0
-    reason: str  # Why this was recommended
-
-
 class FeedResponse(BaseModel):
     mode: FeedMode
-    recommendations: list[RecipeRecommendation]
+    recipes: list[int]  # List of recipe IDs
+    steal_dishes: Optional[list[dict]] = None
 
 
 class FeedbackRequest(BaseModel):
@@ -38,16 +36,63 @@ class FeedbackRequest(BaseModel):
     action: str  # 'like', 'cook', 'skip'
 
 
+async def get_db_pool():
+    """Get database connection pool."""
+    database_url = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/cuisine13_dev")
+    return await asyncpg.create_pool(database_url)
+
+
 @router.post("/feed", response_model=FeedResponse)
 async def get_personalized_feed(request: FeedRequest):
     """
     Get personalized recipe recommendations for a user.
     In normal mode: returns recipes from database sorted by preference match.
-    In steal mode: returns restaurant dishes from Yelp (handled by steal router).
+    In steal mode: returns restaurant dishes from Yelp.
+    In trending mode: returns trending local dishes.
     """
-    # TODO: Implement recommendation logic
-    # For now, return empty list
-    return FeedResponse(mode=request.mode, recommendations=[])
+    try:
+        pool = await get_db_pool()
+        async with pool.acquire() as conn:
+            # Get recipe IDs from database
+            # For now, simple ordering by recent + liked count
+            # TODO: Add ML-based personalization
+            rows = await conn.fetch(
+                """
+                SELECT r.id
+                FROM recipes r
+                LEFT JOIN recipe_likes rl ON r.id = rl.recipe_id
+                GROUP BY r.id
+                ORDER BY COUNT(rl.id) DESC, r.inserted_at DESC
+                LIMIT $1
+                """,
+                request.limit
+            )
+            recipe_ids = [row["id"] for row in rows]
+        await pool.close()
+    except Exception as e:
+        print(f"Database error: {e}")
+        recipe_ids = []
+
+    steal_dishes = None
+
+    # If steal mode, also fetch restaurant dishes
+    if request.mode == FeedMode.steal and request.latitude and request.longitude:
+        try:
+            yelp = get_yelp_service()
+            steal_dishes = await yelp.get_nearby_dishes(
+                latitude=request.latitude,
+                longitude=request.longitude,
+                limit=request.limit,
+            )
+        except Exception as e:
+            print(f"Yelp error: {e}")
+            steal_dishes = []
+
+    return FeedResponse(
+        mode=request.mode,
+        recipes=recipe_ids,
+        steal_dishes=steal_dishes
+    )
 
 
 @router.post("/feedback")
@@ -86,5 +131,27 @@ async def get_trending_nearby(request: TrendingRequest):
     Get trending dishes from restaurants near the user's location.
     Uses Yelp API to find popular items.
     """
-    # TODO: Implement Yelp API integration
-    return TrendingResponse(location="Your Area", dishes=[])
+    try:
+        yelp = get_yelp_service()
+        dishes = await yelp.get_nearby_dishes(
+            latitude=request.latitude,
+            longitude=request.longitude,
+            radius_meters=int(request.radius_miles * 1609.34),
+        )
+        return TrendingResponse(
+            location="Your Area",
+            dishes=[
+                TrendingDish(
+                    dish_name=d["dish_name"],
+                    restaurant_name=d["restaurant_name"],
+                    restaurant_logo=d.get("restaurant_logo"),
+                    image_url=d.get("dish_image"),
+                    rating=d.get("rating", 0),
+                    distance_miles=d.get("distance_miles", 0),
+                )
+                for d in dishes
+            ]
+        )
+    except Exception as e:
+        print(f"Trending error: {e}")
+        return TrendingResponse(location="Your Area", dishes=[])

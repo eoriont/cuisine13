@@ -33,6 +33,26 @@ defmodule Cuisine13.Recipes do
   end
 
   @doc """
+  Gets multiple recipes by their IDs, preserving the order of IDs.
+  """
+  def get_recipes_by_ids(ids) when is_list(ids) do
+    if Enum.empty?(ids) do
+      []
+    else
+      recipes =
+        from(r in Recipe,
+          where: r.id in ^ids,
+          preload: [:ingredients, :instructions, :prep_tasks]
+        )
+        |> Repo.all()
+
+      # Sort by the original ID order
+      id_to_recipe = Map.new(recipes, &{&1.id, &1})
+      Enum.map(ids, &Map.get(id_to_recipe, &1)) |> Enum.reject(&is_nil/1)
+    end
+  end
+
+  @doc """
   Creates a recipe.
   """
   def create_recipe(attrs \\ %{}) do

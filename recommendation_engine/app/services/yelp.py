@@ -120,5 +120,19 @@ class YelpService:
 def get_yelp_service() -> YelpService:
     settings = get_settings()
     if not settings.yelp_api_key:
-        raise ValueError("YELP_API_KEY not configured")
+        # Return a mock service that returns empty results
+        return MockYelpService()
     return YelpService(settings.yelp_api_key)
+
+
+class MockYelpService:
+    """Mock Yelp service when API key is not configured."""
+
+    async def get_nearby_dishes(self, **kwargs) -> list[dict]:
+        return []
+
+    async def search_restaurant(self, name: str, location: str = None) -> dict | None:
+        return None
+
+    async def get_business_details(self, business_id: str) -> dict | None:
+        return None
