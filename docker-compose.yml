@@ -10,8 +10,8 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
-      # Exposed on all interfaces to allow Tailscale access
-      - "0.0.0.0:5432:5432"
+      # Exposed on all interfaces to allow Tailscale access (using port 5433 to avoid conflicts)
+      - "0.0.0.0:5433:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -54,8 +54,8 @@ services:
       YELP_API_KEY: ${YELP_API_KEY:-}
       GOOGLE_PLACES_API_KEY: ${GOOGLE_PLACES_API_KEY:-}
     ports:
-      # Exposed on all interfaces to allow Tailscale access
-      - "0.0.0.0:8000:8000"
+      # Exposed on all interfaces to allow Tailscale access (using port 8001 to avoid conflicts)
+      - "0.0.0.0:8001:8000"
     volumes:
       - ./recommendation_engine/app:/app/app
     depends_on:
