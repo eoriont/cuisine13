@@ -88,7 +88,7 @@ async def steal_from_text(
     """
     try:
         # Parse the query to extract dish and restaurant
-        parsed = await claude.parse_dish_query(request.query)
+        parsed = claude.parse_dish_query(request.query)
 
         # Try to find restaurant info from Yelp
         restaurant_info = None
@@ -96,7 +96,7 @@ async def steal_from_text(
             restaurant_info = await yelp.search_restaurant(parsed["restaurant"])
 
         # Generate the recipe
-        recipe = await claude.generate_recipe_from_dish(
+        recipe = claude.generate_recipe_from_dish(
             dish_name=parsed.get("dish", request.query),
             restaurant_name=parsed.get("restaurant"),
             restaurant_info=restaurant_info,
@@ -118,10 +118,10 @@ async def steal_from_image(
     """
     try:
         # Identify the dish from the image
-        identification = await claude.identify_dish_from_image(request.image_base64)
+        identification = claude.identify_dish_from_image(request.image_base64)
 
         # Generate the recipe
-        recipe = await claude.generate_recipe_from_dish(
+        recipe = claude.generate_recipe_from_dish(
             dish_name=identification.get("dish_name", "Unknown Dish"),
             restaurant_name=identification.get("restaurant"),
             cuisine=identification.get("cuisine"),
@@ -149,7 +149,7 @@ async def steal_from_restaurant_menu(
         restaurant = await yelp.get_business_details(yelp_business_id)
 
         # Generate the recipe
-        recipe = await claude.generate_recipe_from_dish(
+        recipe = claude.generate_recipe_from_dish(
             dish_name=dish_name,
             restaurant_name=restaurant.get("name"),
             restaurant_info=restaurant,

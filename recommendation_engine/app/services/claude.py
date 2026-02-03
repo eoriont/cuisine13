@@ -11,7 +11,7 @@ class ClaudeService:
         self.haiku_model = "claude-3-haiku-20240307"
         self.sonnet_model = "claude-sonnet-4-20250514"
 
-    async def normalize_ingredient(self, text: str) -> dict:
+    def normalize_ingredient(self, text: str) -> dict:
         """
         Normalize and spell-check a single ingredient using Claude Haiku.
         """
@@ -51,7 +51,7 @@ Rules:
                 "confidence": 1.0,
             }
 
-    async def normalize_ingredients_batch(self, ingredients: list[str]) -> list[dict]:
+    def normalize_ingredients_batch(self, ingredients: list[str]) -> list[dict]:
         """
         Normalize multiple ingredients at once (more efficient).
         """
@@ -95,7 +95,7 @@ Rules:
                 for ing in ingredients
             ]
 
-    async def generate_recipe_facts(
+    def generate_recipe_facts(
         self,
         title: str,
         ingredients: list[str],
@@ -136,7 +136,7 @@ Guidelines:
         except json.JSONDecodeError:
             return []
 
-    async def parse_dish_query(self, query: str) -> dict:
+    def parse_dish_query(self, query: str) -> dict:
         """
         Parse a natural language query to extract dish name and restaurant.
         E.g., "Orange Chicken from Panda Express" -> {"dish": "Orange Chicken", "restaurant": "Panda Express"}
@@ -163,7 +163,7 @@ Respond with JSON only:
         except json.JSONDecodeError:
             return {"dish": query, "restaurant": None, "cuisine": None}
 
-    async def generate_recipe_from_dish(
+    def generate_recipe_from_dish(
         self,
         dish_name: str,
         restaurant_name: Optional[str] = None,
@@ -219,7 +219,7 @@ Guidelines:
         except json.JSONDecodeError:
             raise ValueError("Failed to generate recipe")
 
-    async def identify_dish_from_image(self, image_base64: str) -> dict:
+    def identify_dish_from_image(self, image_base64: str) -> dict:
         """
         Identify a dish from a photo using Claude Vision.
         """

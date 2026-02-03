@@ -35,7 +35,7 @@ async def normalize_ingredient(
     Normalize and spell-check a single ingredient.
     Uses Claude Haiku for fast, cheap processing.
     """
-    result = await claude.normalize_ingredient(request.text)
+    result = claude.normalize_ingredient(request.text)
     return result
 
 
@@ -48,5 +48,5 @@ async def normalize_ingredients_batch(
     Normalize and spell-check multiple ingredients at once.
     More efficient than calling normalize multiple times.
     """
-    results = await claude.normalize_ingredients_batch(request.ingredients)
+    results = claude.normalize_ingredients_batch(request.ingredients)
     return BatchNormalizeResponse(results=results)

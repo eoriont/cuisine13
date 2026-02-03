@@ -33,6 +33,16 @@ defmodule Cuisine13.Recipes do
   end
 
   @doc """
+  Gets a single recipe with all associations, returns nil if not found.
+  """
+  def get_recipe(id) do
+    case Repo.get(Recipe, id) do
+      nil -> nil
+      recipe -> Repo.preload(recipe, [:ingredients, :instructions, :prep_tasks])
+    end
+  end
+
+  @doc """
   Creates a recipe.
   """
   def create_recipe(attrs \\ %{}) do

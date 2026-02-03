@@ -8,11 +8,14 @@ defmodule Cuisine13.Planning.PlannedMeal do
     field :servings, :integer
     field :notes, :string
     field :is_leftover, :boolean, default: false
+    field :is_prepared, :boolean, default: false
+    field :prepared_at, :naive_datetime
 
     belongs_to :household, Cuisine13.Households.Household
     belongs_to :recipe, Cuisine13.Recipes.Recipe
     belongs_to :added_by, Cuisine13.Accounts.User
     belongs_to :leftover_from, Cuisine13.Planning.PlannedMeal
+    belongs_to :prepared_by, Cuisine13.Accounts.User
 
     has_many :prep_reminders, Cuisine13.Preparation.PrepReminder
 

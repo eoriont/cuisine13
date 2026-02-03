@@ -142,6 +142,52 @@ defmodule Cuisine13Web.CalendarLive do
   end
 
   @impl true
+  def handle_event("mark_prepared", %{"id" => id}, socket) do
+    planned_meal_id = String.to_integer(id)
+
+    case Planning.mark_meal_as_prepared(planned_meal_id, socket.assigns.current_user.id) do
+      {:ok, _} ->
+        planned_meals =
+          Planning.list_planned_meals(
+            socket.assigns.household.id,
+            socket.assigns.week_start,
+            socket.assigns.week_end
+          )
+
+        {:noreply,
+         socket
+         |> assign(:planned_meals, planned_meals)
+         |> put_flash(:info, "Meal marked as prepared! Ingredients deducted from pantry.")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to mark meal as prepared")}
+    end
+  end
+
+  @impl true
+  def handle_event("unmark_prepared", %{"id" => id}, socket) do
+    planned_meal_id = String.to_integer(id)
+
+    case Planning.unmark_meal_as_prepared(planned_meal_id) do
+      {:ok, _} ->
+        planned_meals =
+          Planning.list_planned_meals(
+            socket.assigns.household.id,
+            socket.assigns.week_start,
+            socket.assigns.week_end
+          )
+
+        {:noreply,
+         socket
+         |> assign(:planned_meals, planned_meals)
+         |> put_flash(:info, "Meal unmarked as prepared")}
+
+      {:error, _} ->
+        {:noreply, put_flash(socket, :error, "Failed to unmark meal")}
+    end
+  end
+
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white">

@@ -92,4 +92,45 @@ defmodule Cuisine13.Planning do
       %{ingredient | quantity: scaled_quantity}
     end)
   end
+
+  @doc """
+  Marks a planned meal as prepared and deducts ingredients from pantry.
+  Returns {:ok, planned_meal} or {:error, changeset}.
+  """
+  def mark_meal_as_prepared(planned_meal_id, user_id) do
+    planned_meal = get_planned_meal!(planned_meal_id)
+
+    # Load recipe with ingredients
+    recipe = Cuisine13.Repo.preload(planned_meal.recipe, :ingredients)
+
+    # Scale ingredients based on servings
+    scaled_ingredients =
+      scale_ingredients(recipe.ingredients, recipe.servings, planned_meal.servings)
+
+    # Deduct from pantry
+    Cuisine13.Pantry.deduct_ingredients_from_pantry(
+      planned_meal.household_id,
+      scaled_ingredients
+    )
+
+    # Mark as prepared
+    update_planned_meal(planned_meal, %{
+      is_prepared: true,
+      prepared_at: NaiveDateTime.utc_now(),
+      prepared_by_id: user_id
+    })
+  end
+
+  @doc """
+  Unmarks a planned meal as prepared (in case of mistake).
+  """
+  def unmark_meal_as_prepared(planned_meal_id) do
+    planned_meal = get_planned_meal!(planned_meal_id)
+
+    update_planned_meal(planned_meal, %{
+      is_prepared: false,
+      prepared_at: nil,
+      prepared_by_id: nil
+    })
+  end
 end

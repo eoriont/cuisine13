@@ -1,15 +1,29 @@
 defmodule Cuisine13Web.RecipeFeedLive do
   use Cuisine13Web, :live_view
 
-  alias Cuisine13.{Recipes, Households, Planning}
+  alias Cuisine13.{Recipes, Households, Planning, RecommendationClient}
+  require Logger
 
   on_mount {Cuisine13Web.UserAuth, :ensure_authenticated}
 
   @impl true
   def mount(_params, _session, socket) do
-    recipes = Recipes.list_recipes(limit: 20, offset: 0)
     current_user = socket.assigns.current_user
     household = get_or_create_household(current_user)
+
+    # Try to get recommendations from the recommendation engine
+    recipes =
+      case RecommendationClient.get_feed_recommendations(current_user.id, "discover", 20) do
+        {:ok, recommendations} when length(recommendations) > 0 ->
+          # Convert recommendation IDs to full recipe objects
+          recipe_ids = Enum.map(recommendations, & &1["recipe_id"])
+          load_recipes_by_ids(recipe_ids)
+
+        _ ->
+          # Fallback to database recipes if recommendation engine fails or returns empty
+          Logger.info("Using fallback recipes from database")
+          Recipes.list_recipes(limit: 20, offset: 0)
+      end
 
     # Get liked recipe IDs for this household
     liked_recipe_ids = get_liked_recipe_ids(household)
@@ -138,5 +152,19 @@ defmodule Cuisine13Web.RecipeFeedLive do
 
   defp recipe_liked?(recipe, liked_recipe_ids) do
     MapSet.member?(liked_recipe_ids, recipe.id)
+  end
+
+  defp load_recipes_by_ids(recipe_ids) do
+    # Load recipes by IDs while preserving the order from recommendations
+    recipe_map =
+      recipe_ids
+      |> Enum.uniq()
+      |> Enum.map(&Recipes.get_recipe/1)
+      |> Enum.filter(&(&1 != nil))
+      |> Map.new(&{&1.id, &1})
+
+    # Return recipes in the order specified by recipe_ids
+    Enum.map(recipe_ids, &Map.get(recipe_map, &1))
+    |> Enum.filter(&(&1 != nil))
   end
 end

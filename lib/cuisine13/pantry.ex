@@ -89,4 +89,47 @@ defmodule Cuisine13.Pantry do
         update_pantry_item(existing_item, %{quantity: new_quantity})
     end
   end
+
+  @doc """
+  Deducts ingredients from pantry items.
+  Matches by ingredient name (case-insensitive) and unit.
+  Only deducts if there's a matching pantry item with sufficient quantity.
+  """
+  def deduct_ingredients_from_pantry(household_id, ingredients) do
+    Enum.each(ingredients, fn ingredient ->
+      # Skip if no quantity specified
+      if ingredient.quantity do
+        # Find matching pantry item (case-insensitive name match and same unit)
+        existing =
+          from(pi in PantryItem,
+            where:
+              pi.household_id == ^household_id and
+                fragment("LOWER(?)", pi.name) == ^String.downcase(ingredient.name) and
+                pi.unit == ^ingredient.unit
+          )
+          |> Repo.one()
+
+        case existing do
+          nil ->
+            # No matching pantry item, skip
+            :ok
+
+          existing_item ->
+            # Deduct from existing quantity
+            if existing_item.quantity do
+              new_quantity = Decimal.sub(existing_item.quantity, ingredient.quantity)
+
+              # If quantity becomes zero or negative, delete the item
+              if Decimal.compare(new_quantity, Decimal.new(0)) != :gt do
+                delete_pantry_item(existing_item)
+              else
+                update_pantry_item(existing_item, %{quantity: new_quantity})
+              end
+            end
+        end
+      end
+    end)
+
+    :ok
+  end
 end

@@ -7,25 +7,35 @@ defmodule Cuisine13Web.RecipeDetailLive do
 
   @impl true
   def mount(%{"id" => id}, _session, socket) do
-    recipe = Recipes.get_recipe!(id)
-    current_user = socket.assigns.current_user
-    household = get_household(current_user)
+    case Recipes.get_recipe(id) do
+      nil ->
+        socket =
+          socket
+          |> put_flash(:error, "Recipe not found")
+          |> redirect(to: "/")
 
-    is_liked =
-      if household do
-        Recipes.household_liked?(recipe.id, household.id)
-      else
-        Recipes.liked?(recipe.id, current_user.id)
-      end
+        {:ok, socket}
 
-    socket =
-      socket
-      |> assign(:recipe, recipe)
-      |> assign(:page_title, recipe.title)
-      |> assign(:household, household)
-      |> assign(:is_liked, is_liked)
+      recipe ->
+        current_user = socket.assigns.current_user
+        household = get_household(current_user)
 
-    {:ok, socket}
+        is_liked =
+          if household do
+            Recipes.household_liked?(recipe.id, household.id)
+          else
+            Recipes.liked?(recipe.id, current_user.id)
+          end
+
+        socket =
+          socket
+          |> assign(:recipe, recipe)
+          |> assign(:page_title, recipe.title)
+          |> assign(:household, household)
+          |> assign(:is_liked, is_liked)
+
+        {:ok, socket}
+    end
   end
 
   defp get_household(user) do
@@ -77,6 +87,11 @@ defmodule Cuisine13Web.RecipeDetailLive do
               </svg>
             <% end %>
             <h1 class="text-xl font-semibold flex-1 truncate"><%= @recipe.title %></h1>
+            <%= live_redirect to: "/recipes/#{@recipe.id}/edit", class: "text-gray-400 hover:text-white transition-colors p-2" do %>
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+              </svg>
+            <% end %>
             <button
               phx-click="toggle_like"
               class="p-2 rounded-lg transition-colors min-w-[44px] min-h-[44px] flex items-center justify-center"

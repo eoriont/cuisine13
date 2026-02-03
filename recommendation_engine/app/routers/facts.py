@@ -34,7 +34,7 @@ async def generate_recipe_facts(
     Uses Claude Haiku for fast generation.
     Facts are cached after first generation.
     """
-    facts = await claude.generate_recipe_facts(
+    facts = claude.generate_recipe_facts(
         title=request.title,
         ingredients=request.ingredients,
         cuisine=request.cuisine,
