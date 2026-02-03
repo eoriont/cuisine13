@@ -18,25 +18,18 @@ defmodule Cuisine13.RecommendationClient do
       limit: limit
     }
 
-    case HTTPoison.post(url, Jason.encode!(body), headers(), recv_timeout: 5000) do
-      {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
-        case Jason.decode(response_body) do
-          {:ok, data} ->
-            recommendations = Map.get(data, "recommendations", [])
-            {:ok, recommendations}
+    case Req.post(url, json: body, receive_timeout: 5000) do
+      {:ok, %Req.Response{status: 200, body: data}} ->
+        recommendations = Map.get(data, "recommendations", [])
+        {:ok, recommendations}
 
-          {:error, _} = error ->
-            Logger.error("Failed to decode recommendation response: #{inspect(error)}")
-            {:error, :decode_error}
-        end
-
-      {:ok, %HTTPoison.Response{status_code: status_code}} ->
+      {:ok, %Req.Response{status: status_code}} ->
         Logger.error("Recommendation engine returned status #{status_code}")
         {:error, {:http_error, status_code}}
 
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.error("Failed to connect to recommendation engine: #{inspect(reason)}")
-        {:error, {:connection_error, reason}}
+      {:error, exception} ->
+        Logger.error("Failed to connect to recommendation engine: #{inspect(exception)}")
+        {:error, {:connection_error, exception}}
     end
   end
 
@@ -52,28 +45,21 @@ defmodule Cuisine13.RecommendationClient do
       action: action
     }
 
-    case HTTPoison.post(url, Jason.encode!(body), headers(), recv_timeout: 5000) do
-      {:ok, %HTTPoison.Response{status_code: 200}} ->
+    case Req.post(url, json: body, receive_timeout: 5000) do
+      {:ok, %Req.Response{status: 200}} ->
         :ok
 
-      {:ok, %HTTPoison.Response{status_code: status_code}} ->
+      {:ok, %Req.Response{status: status_code}} ->
         Logger.warning("Feedback recording returned status #{status_code}")
         {:error, {:http_error, status_code}}
 
-      {:error, %HTTPoison.Error{reason: reason}} ->
-        Logger.warning("Failed to record feedback: #{inspect(reason)}")
-        {:error, {:connection_error, reason}}
+      {:error, exception} ->
+        Logger.warning("Failed to record feedback: #{inspect(exception)}")
+        {:error, {:connection_error, exception}}
     end
   end
 
   defp recommendation_engine_url do
     System.get_env("RECOMMENDATION_ENGINE_URL") || "http://localhost:8000"
-  end
-
-  defp headers do
-    [
-      {"Content-Type", "application/json"},
-      {"Accept", "application/json"}
-    ]
   end
 end
