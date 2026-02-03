@@ -18,18 +18,20 @@ defmodule Cuisine13.RecommendationClient do
       limit: limit
     }
 
-    case Req.post(url, json: body, receive_timeout: 5000) do
-      {:ok, %Req.Response{status: 200, body: data}} ->
+    client = build_client()
+
+    case Tesla.post(client, url, body) do
+      {:ok, %Tesla.Env{status: 200, body: data}} ->
         recommendations = Map.get(data, "recommendations", [])
         {:ok, recommendations}
 
-      {:ok, %Req.Response{status: status_code}} ->
+      {:ok, %Tesla.Env{status: status_code}} ->
         Logger.error("Recommendation engine returned status #{status_code}")
         {:error, {:http_error, status_code}}
 
-      {:error, exception} ->
-        Logger.error("Failed to connect to recommendation engine: #{inspect(exception)}")
-        {:error, {:connection_error, exception}}
+      {:error, reason} ->
+        Logger.error("Failed to connect to recommendation engine: #{inspect(reason)}")
+        {:error, {:connection_error, reason}}
     end
   end
 
@@ -45,18 +47,31 @@ defmodule Cuisine13.RecommendationClient do
       action: action
     }
 
-    case Req.post(url, json: body, receive_timeout: 5000) do
-      {:ok, %Req.Response{status: 200}} ->
+    client = build_client()
+
+    case Tesla.post(client, url, body) do
+      {:ok, %Tesla.Env{status: 200}} ->
         :ok
 
-      {:ok, %Req.Response{status: status_code}} ->
+      {:ok, %Tesla.Env{status: status_code}} ->
         Logger.warning("Feedback recording returned status #{status_code}")
         {:error, {:http_error, status_code}}
 
-      {:error, exception} ->
-        Logger.warning("Failed to record feedback: #{inspect(exception)}")
-        {:error, {:connection_error, exception}}
+      {:error, reason} ->
+        Logger.warning("Failed to record feedback: #{inspect(reason)}")
+        {:error, {:connection_error, reason}}
     end
+  end
+
+  defp build_client do
+    middleware = [
+      {Tesla.Middleware.BaseUrl, recommendation_engine_url()},
+      Tesla.Middleware.JSON,
+      {Tesla.Middleware.Headers, [{"accept", "application/json"}]},
+      {Tesla.Middleware.Timeout, timeout: 5_000}
+    ]
+
+    Tesla.client(middleware, Tesla.Adapter.Hackney)
   end
 
   defp recommendation_engine_url do
