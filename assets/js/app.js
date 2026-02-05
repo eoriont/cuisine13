@@ -29,9 +29,84 @@ let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("
 // Detect if we're on iOS
 let isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream
 
+// Pull-to-Refresh Hook for AI Recipe Generation
+let Hooks = {}
+Hooks.PullToRefresh = {
+  mounted() {
+    let touchStartY = 0
+    let touchCurrentY = 0
+    let pullDistance = 0
+    let isPulling = false
+    let threshold = 80 // pixels to pull before triggering
+
+    const container = this.el
+    const indicator = document.getElementById('pull-indicator')
+    const pullIcon = indicator?.querySelector('.pull-icon')
+    const pullText = indicator?.querySelector('.pull-text')
+    const releaseText = indicator?.querySelector('.release-text')
+
+    container.addEventListener('touchstart', (e) => {
+      // Only enable pull-to-refresh when scrolled to top
+      if (container.scrollTop === 0) {
+        touchStartY = e.touches[0].clientY
+        isPulling = true
+      }
+    }, { passive: true })
+
+    container.addEventListener('touchmove', (e) => {
+      if (!isPulling) return
+
+      touchCurrentY = e.touches[0].clientY
+      pullDistance = touchCurrentY - touchStartY
+
+      // Only show indicator if pulling down
+      if (pullDistance > 0 && indicator) {
+        const translateY = Math.min(pullDistance, threshold + 40)
+        indicator.style.transform = `translateY(${translateY}px)`
+        indicator.style.opacity = Math.min(pullDistance / threshold, 1)
+
+        // Change icon and text when threshold reached
+        if (pullDistance >= threshold) {
+          pullIcon?.style.setProperty('transform', 'rotate(180deg)')
+          pullText?.classList.add('hidden')
+          releaseText?.classList.remove('hidden')
+        } else {
+          pullIcon?.style.setProperty('transform', 'rotate(0deg)')
+          pullText?.classList.remove('hidden')
+          releaseText?.classList.add('hidden')
+        }
+      }
+    }, { passive: true })
+
+    container.addEventListener('touchend', (e) => {
+      if (!isPulling) return
+
+      if (pullDistance >= threshold && indicator) {
+        // Trigger recipe generation
+        this.pushEvent('generate_recipes', {})
+      }
+
+      // Reset
+      if (indicator) {
+        setTimeout(() => {
+          indicator.style.transform = 'translateY(-100%)'
+          indicator.style.opacity = '0'
+          pullIcon?.style.setProperty('transform', 'rotate(0deg)')
+          pullText?.classList.remove('hidden')
+          releaseText?.classList.add('hidden')
+        }, 300)
+      }
+
+      isPulling = false
+      pullDistance = 0
+    }, { passive: true })
+  }
+}
+
 // Socket options
 let socketOpts = {
   params: {_csrf_token: csrfToken},
+  hooks: Hooks,
   dom: {
     onBeforeElUpdated(from, to) {
       if (from._x_dataStack) {

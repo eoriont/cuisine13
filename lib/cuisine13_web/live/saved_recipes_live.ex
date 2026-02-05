@@ -35,27 +35,32 @@ defmodule Cuisine13Web.SavedRecipesLive do
   end
 
   @impl true
-  def handle_event("unlike_recipe", %{"recipe-id" => recipe_id}, socket) do
-    recipe_id = String.to_integer(recipe_id)
-    current_user = socket.assigns.current_user
-    household = socket.assigns.household
+  def handle_event("unlike_recipe", %{"recipe-id" => recipe_id_str}, socket) do
+    case Integer.parse(recipe_id_str) do
+      {recipe_id, ""} ->
+        current_user = socket.assigns.current_user
+        household = socket.assigns.household
 
-    # Unlike the recipe
-    if household do
-      Recipes.unlike_recipe_for_household(recipe_id, household.id)
-    else
-      Recipes.unlike_recipe(recipe_id, current_user.id)
+        # Unlike the recipe
+        if household do
+          Recipes.unlike_recipe_for_household(recipe_id, household.id)
+        else
+          Recipes.unlike_recipe(recipe_id, current_user.id)
+        end
+
+        # Refresh the recipes list
+        recipes =
+          if household do
+            Recipes.list_household_liked_recipes(household.id)
+          else
+            Recipes.list_liked_recipes(current_user.id)
+          end
+
+        {:noreply, assign(socket, :recipes, recipes)}
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Invalid recipe ID")}
     end
-
-    # Refresh the recipes list
-    recipes =
-      if household do
-        Recipes.list_household_liked_recipes(household.id)
-      else
-        Recipes.list_liked_recipes(current_user.id)
-      end
-
-    {:noreply, assign(socket, :recipes, recipes)}
   end
 
   @impl true
@@ -63,7 +68,7 @@ defmodule Cuisine13Web.SavedRecipesLive do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white">
       <!-- Header with iOS safe area -->
-      <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <header class="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800" style="padding-top: max(1rem, env(safe-area-inset-top))">
         <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold text-white">
@@ -74,7 +79,7 @@ defmodule Cuisine13Web.SavedRecipesLive do
       </header>
 
       <!-- Content -->
-      <main class="max-w-7xl mx-auto px-4 py-6 mobile-content">
+      <main class="max-w-7xl mx-auto px-4 py-6 pb-24">
         <%= if Enum.empty?(@recipes) do %>
           <div class="flex flex-col items-center justify-center py-20">
             <svg class="w-20 h-20 text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

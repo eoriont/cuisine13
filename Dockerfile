@@ -22,7 +22,8 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
     apt-get clean && rm -f /var/lib/apt/lists/*_*
 
 # Copy mix files
-COPY mix.exs mix.lock ./
+COPY mix.exs ./
+COPY mix.loc[k] ./
 
 # Install dependencies
 RUN mix deps.get
@@ -45,7 +46,8 @@ FROM base AS build
 ENV MIX_ENV=prod
 
 # Copy mix files
-COPY mix.exs mix.lock ./
+COPY mix.exs ./
+COPY mix.loc[k] ./
 RUN mix deps.get --only prod
 RUN mix deps.compile
 

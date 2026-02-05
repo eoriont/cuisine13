@@ -3,3 +3,26 @@
 @tailwind utilities;
 
 /* This file is for your main application CSS */
+
+/* Pull-to-Refresh Loading Animation */
+#pull-indicator .loading-icon {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Smooth pull indicator transitions */
+#pull-indicator {
+  transition: transform 0.3s ease-out, opacity 0.2s ease-out;
+}
+
+#pull-indicator .pull-icon {
+  transition: transform 0.2s ease-out;
+}

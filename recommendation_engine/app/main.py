@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
-from .routers import ingredients, facts, recommend, steal
+from .routers import ingredients, facts, recommend, steal, generate
 
 settings = get_settings()
 
@@ -26,6 +26,7 @@ app.include_router(ingredients.router, prefix="/api/ingredients", tags=["Ingredi
 app.include_router(facts.router, prefix="/api/facts", tags=["Recipe Facts"])
 app.include_router(recommend.router, prefix="/api/recommend", tags=["Recommendations"])
 app.include_router(steal.router, prefix="/api/steal", tags=["Steal Mode"])
+app.include_router(generate.router, prefix="/api/generate", tags=["AI Generation"])
 
 
 @app.get("/")

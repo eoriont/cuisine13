@@ -109,15 +109,15 @@ defmodule Cuisine13Web.HouseholdLive do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white pb-20">
       <!-- Header -->
-      <header class="sticky top-0 z-20 bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
-        <div class="max-w-2xl mx-auto px-4 py-4">
+      <header class="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800" style="padding-top: max(1rem, env(safe-area-inset-top))">
+        <div class="max-w-2xl mx-auto px-4 py-3">
           <h1 class="text-2xl font-bold text-white">
             Household
           </h1>
         </div>
       </header>
 
-      <main class="max-w-2xl mx-auto px-4 py-6 space-y-6">
+      <main class="max-w-2xl mx-auto px-4 py-6 space-y-6 pb-24">
         <%= if @household do %>
           <!-- Current Household -->
           <div class="bg-gray-900 rounded-xl border border-gray-800 p-6">
@@ -164,6 +164,26 @@ defmodule Cuisine13Web.HouseholdLive do
                   </svg>
                 </button>
               </div>
+            </div>
+
+            <!-- API Settings -->
+            <div class="mb-6">
+              <%= live_redirect to: "/settings/api", class: "flex items-center justify-between w-full p-4 bg-gray-800/50 hover:bg-gray-800 rounded-lg transition-colors group" do %>
+                <div class="flex items-center gap-3">
+                  <div class="p-2 bg-blue-600/20 rounded-lg">
+                    <svg class="w-5 h-5 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 class="text-sm font-medium text-white">API Settings</h3>
+                    <p class="text-xs text-gray-400">Configure Claude, Yelp, and Google API keys</p>
+                  </div>
+                </div>
+                <svg class="w-5 h-5 text-gray-500 group-hover:text-gray-300 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                </svg>
+              <% end %>
             </div>
 
             <!-- Leave Household -->

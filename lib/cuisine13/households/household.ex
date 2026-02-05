@@ -6,6 +6,9 @@ defmodule Cuisine13.Households.Household do
     field :name, :string
     field :invite_code, :string
     field :calendar_feed_token, :string
+    field :anthropic_api_key, :string
+    field :yelp_api_key, :string
+    field :google_places_api_key, :string
 
     has_many :household_memberships, Cuisine13.Households.HouseholdMembership
     has_many :users, through: [:household_memberships, :user]
@@ -25,6 +28,14 @@ defmodule Cuisine13.Households.Household do
     |> validate_length(:name, min: 1, max: 255)
     |> unique_constraint(:invite_code)
     |> unique_constraint(:calendar_feed_token)
+  end
+
+  @doc """
+  Changeset for updating API keys.
+  """
+  def api_keys_changeset(household, attrs) do
+    household
+    |> cast(attrs, [:anthropic_api_key, :yelp_api_key, :google_places_api_key])
   end
 
   @doc """

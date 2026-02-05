@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes"/>
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
     <meta name="theme-color" content="#0a0a0a" id="theme-color-meta"/>
-    <%= live_title_tag assigns[:page_title] || "Cuisine13", suffix: " · Cuisine13" %>
+    <title><%= assigns[:page_title] || "Cuisine13" %> · Cuisine13</title>
     <!-- Inter font from Google Fonts - clean, professional typography -->
     <link rel="preconnect" href="https://fonts.googleapis.com"/>
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="anonymous"/>
@@ -151,8 +151,10 @@
       /* Sticky header with safe area */
       .mobile-header {
         padding-top: max(1rem, env(safe-area-inset-top));
-        position: sticky;
+        position: fixed;
         top: 0;
+        left: 0;
+        right: 0;
         z-index: 40;
       }
 
@@ -166,8 +168,9 @@
         z-index: 40;
       }
 
-      /* Content padding to account for fixed nav */
+      /* Content padding to account for fixed nav and header */
       .mobile-content {
+        padding-top: calc(4.5rem + env(safe-area-inset-top));
         padding-bottom: calc(5rem + env(safe-area-inset-bottom));
       }
 

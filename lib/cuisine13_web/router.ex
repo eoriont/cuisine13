@@ -23,11 +23,14 @@ defmodule Cuisine13Web.Router do
     live "/", RecipeFeedLive, :index
     live "/recipes/saved", SavedRecipesLive, :index
     live "/recipes/:id", RecipeDetailLive, :show
+    live "/recipes/:id/edit", RecipeEditLive, :edit
+    live "/recipes/:id/cook", CookingModeLive, :cook
     live "/calendar", CalendarLive, :index
     live "/calendar/full", FullCalendarLive, :index
     live "/groceries", GroceriesLive, :index
     live "/prep", PrepTimelineLive, :index
     live "/household", HouseholdLive, :index
+    live "/settings/api", SettingsLive, :index
   end
 
   # Other scopes may use custom stacks.

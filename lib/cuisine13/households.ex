@@ -22,6 +22,16 @@ defmodule Cuisine13.Households do
   end
 
   @doc """
+  Returns all households that have an Anthropic API key configured.
+  """
+  def list_households_with_api_keys do
+    Repo.all(
+      from h in Household,
+        where: not is_nil(h.anthropic_api_key) and h.anthropic_api_key != ""
+    )
+  end
+
+  @doc """
   Gets a single household.
   """
   def get_household!(id),
@@ -70,6 +80,22 @@ defmodule Cuisine13.Households do
     household
     |> Household.changeset(attrs)
     |> Repo.update()
+  end
+
+  @doc """
+  Updates API keys for a household.
+  """
+  def update_api_keys(%Household{} = household, attrs) do
+    household
+    |> Household.api_keys_changeset(attrs)
+    |> Repo.update()
+  end
+
+  @doc """
+  Returns a changeset for tracking API keys changes.
+  """
+  def change_api_keys(%Household{} = household, attrs \\ %{}) do
+    Household.api_keys_changeset(household, attrs)
   end
 
   @doc """
@@ -212,5 +238,21 @@ defmodule Cuisine13.Households do
       from hm in HouseholdMembership,
         where: hm.household_id == ^household_id and hm.user_id == ^user_id
     )
+  end
+
+  @doc """
+  Gets the first household for a user, or creates a default one if none exists.
+  This is used to ensure users always have a household when accessing the app.
+  """
+  def get_or_create_default_household(user) do
+    case list_households_for_user(user.id) do
+      [] ->
+        {:ok, household} = create_household(%{name: "#{user.email}'s Household"})
+        {:ok, _membership} = add_member(household.id, user.id, "admin")
+        household
+
+      [household | _] ->
+        household
+    end
   end
 end

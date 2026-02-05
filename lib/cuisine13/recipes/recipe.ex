@@ -15,6 +15,7 @@ defmodule Cuisine13.Recipes.Recipe do
     field :difficulty, :string
     field :source_url, :string
     field :source_attribution, :string
+    field :user_notes, :string
 
     has_many :ingredients, Cuisine13.Recipes.Ingredient
     has_many :instructions, Cuisine13.Recipes.Instruction
@@ -40,7 +41,8 @@ defmodule Cuisine13.Recipes.Recipe do
       :servings,
       :difficulty,
       :source_url,
-      :source_attribution
+      :source_attribution,
+      :user_notes
     ])
     |> validate_required([:title, :servings])
     |> validate_number(:servings, greater_than: 0)

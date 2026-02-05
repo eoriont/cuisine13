@@ -8,7 +8,7 @@ defmodule Cuisine13Web.CalendarLive do
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_user
-    household = get_or_create_household(current_user)
+    household = Households.get_or_create_default_household(current_user)
 
     # Ensure household has a calendar feed token
     {:ok, household} = Households.ensure_calendar_feed_token(household)
@@ -92,34 +92,40 @@ defmodule Cuisine13Web.CalendarLive do
 
   @impl true
   def handle_event("add_recipe", %{"recipe-id" => recipe_id}, socket) do
-    attrs = %{
-      scheduled_date: socket.assigns.selected_date,
-      meal_type: socket.assigns.selected_meal_type,
-      household_id: socket.assigns.household.id,
-      recipe_id: String.to_integer(recipe_id),
-      added_by_id: socket.assigns.current_user.id,
-      servings: 2
-    }
+    case Integer.parse(recipe_id) do
+      {id, ""} ->
+        attrs = %{
+          scheduled_date: socket.assigns.selected_date,
+          meal_type: socket.assigns.selected_meal_type,
+          household_id: socket.assigns.household.id,
+          recipe_id: id,
+          added_by_id: socket.assigns.current_user.id,
+          servings: 2
+        }
 
-    case Planning.create_planned_meal(attrs) do
-      {:ok, _planned_meal} ->
-        planned_meals =
-          Planning.list_planned_meals(
-            socket.assigns.household.id,
-            socket.assigns.week_start,
-            socket.assigns.week_end
-          )
+        case Planning.create_planned_meal(attrs) do
+          {:ok, _planned_meal} ->
+            planned_meals =
+              Planning.list_planned_meals(
+                socket.assigns.household.id,
+                socket.assigns.week_start,
+                socket.assigns.week_end
+              )
 
-        # Auto-regenerate grocery list for upcoming meals
-        Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
+            # Auto-regenerate grocery list for upcoming meals
+            Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
 
-        {:noreply,
-         socket
-         |> assign(:planned_meals, planned_meals)
-         |> assign(:show_add_modal, false)}
+            {:noreply,
+             socket
+             |> assign(:planned_meals, planned_meals)
+             |> assign(:show_add_modal, false)}
 
-      {:error, _changeset} ->
-        {:noreply, socket}
+          {:error, _changeset} ->
+            {:noreply, put_flash(socket, :error, "Failed to add meal to calendar")}
+        end
+
+      _ ->
+        {:noreply, put_flash(socket, :error, "Invalid recipe ID")}
     end
   end
 
@@ -143,31 +149,43 @@ defmodule Cuisine13Web.CalendarLive do
 
   @impl true
   def handle_event("mark_prepared", %{"id" => id}, socket) do
-    planned_meal_id = String.to_integer(id)
+    case Integer.parse(id) do
+      {planned_meal_id, ""} ->
+        case Planning.mark_meal_as_prepared(planned_meal_id, socket.assigns.current_user.id) do
+          {:ok, _} ->
+            planned_meals =
+              Planning.list_planned_meals(
+                socket.assigns.household.id,
+                socket.assigns.week_start,
+                socket.assigns.week_end
+              )
 
-    case Planning.mark_meal_as_prepared(planned_meal_id, socket.assigns.current_user.id) do
-      {:ok, _} ->
-        planned_meals =
-          Planning.list_planned_meals(
-            socket.assigns.household.id,
-            socket.assigns.week_start,
-            socket.assigns.week_end
-          )
+            {:noreply,
+             socket
+             |> assign(:planned_meals, planned_meals)
+             |> put_flash(:info, "Meal marked as prepared! Ingredients deducted from pantry.")}
 
-        {:noreply,
-         socket
-         |> assign(:planned_meals, planned_meals)
-         |> put_flash(:info, "Meal marked as prepared! Ingredients deducted from pantry.")}
+          {:error, _} ->
+            {:noreply, put_flash(socket, :error, "Failed to mark meal as prepared")}
+        end
 
-      {:error, _} ->
-        {:noreply, put_flash(socket, :error, "Failed to mark meal as prepared")}
+      _ ->
+        {:noreply, put_flash(socket, :error, "Invalid meal ID")}
     end
   end
 
   @impl true
   def handle_event("unmark_prepared", %{"id" => id}, socket) do
-    planned_meal_id = String.to_integer(id)
+    case Integer.parse(id) do
+      {planned_meal_id, ""} ->
+        unmark_prepared_meal(planned_meal_id, socket)
 
+      _ ->
+        {:noreply, put_flash(socket, :error, "Invalid meal ID")}
+    end
+  end
+
+  defp unmark_prepared_meal(planned_meal_id, socket) do
     case Planning.unmark_meal_as_prepared(planned_meal_id) do
       {:ok, _} ->
         planned_meals =
@@ -192,7 +210,7 @@ defmodule Cuisine13Web.CalendarLive do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white">
       <!-- Header with iOS safe area -->
-      <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <header class="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800" style="padding-top: max(1rem, env(safe-area-inset-top))">
         <div class="max-w-7xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold text-white">
@@ -211,7 +229,7 @@ defmodule Cuisine13Web.CalendarLive do
         </div>
       </header>
 
-      <main class="max-w-7xl mx-auto px-4 py-6 mobile-content">
+      <main class="max-w-7xl mx-auto px-4 py-6 pb-24">
         <!-- Week Navigation -->
         <div class="flex items-center justify-between mb-6">
           <button
@@ -483,19 +501,6 @@ defmodule Cuisine13Web.CalendarLive do
     # Build the full URL for the calendar feed
     base_url = Cuisine13Web.Endpoint.url()
     "#{base_url}/calendar/feed/#{household.calendar_feed_token}"
-  end
-
-  defp get_or_create_household(user) do
-    case Households.list_households_for_user(user.id) do
-      [] ->
-        # Create a default household for the user
-        {:ok, household} = Households.create_household(%{name: "#{user.email}'s Household"})
-        {:ok, _membership} = Households.add_member(household.id, user.id, "admin")
-        household
-
-      [household | _] ->
-        household
-    end
   end
 
   defp get_meals_for_date_and_type(planned_meals, date, meal_type) do

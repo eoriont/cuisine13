@@ -15,9 +15,9 @@ defmodule Cuisine13.Application do
       # Start the PubSub system
       {Phoenix.PubSub, name: Cuisine13.PubSub},
       # Start the Endpoint (http/https)
-      Cuisine13Web.Endpoint
-      # Start a worker by calling: Cuisine13.Worker.start_link(arg)
-      # {Cuisine13.Worker, arg}
+      Cuisine13Web.Endpoint,
+      # Start the recipe generation worker
+      Cuisine13.RecipeGenerationWorker
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html

@@ -8,7 +8,7 @@ defmodule Cuisine13Web.GroceriesLive do
   @impl true
   def mount(_params, _session, socket) do
     current_user = socket.assigns.current_user
-    household = get_or_create_household(current_user)
+    household = Households.get_or_create_default_household(current_user)
 
     # Auto-generate grocery items for upcoming meals (next 2 weeks)
     Groceries.auto_generate_for_upcoming_meals(household.id, 14)
@@ -23,6 +23,7 @@ defmodule Cuisine13Web.GroceriesLive do
       |> assign(:grocery_items, grocery_items)
       |> assign(:items_by_category, items_by_category)
       |> assign(:show_add_modal, false)
+      |> assign(:search_query, "")
       |> assign_new_item_form()
 
     {:ok, socket}
@@ -38,13 +39,7 @@ defmodule Cuisine13Web.GroceriesLive do
       Groceries.mark_purchased(id, socket.assigns.current_user.id)
     end
 
-    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
-
-    {:noreply,
-     socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)}
+    {:noreply, reload_grocery_items(socket)}
   end
 
   @impl true
@@ -52,13 +47,7 @@ defmodule Cuisine13Web.GroceriesLive do
     item = Groceries.get_grocery_item!(id)
     {:ok, _} = Groceries.delete_grocery_item(item)
 
-    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
-
-    {:noreply,
-     socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)}
+    {:noreply, reload_grocery_items(socket)}
   end
 
   @impl true
@@ -76,26 +65,14 @@ defmodule Cuisine13Web.GroceriesLive do
     # Regenerate grocery items from upcoming meals
     Groceries.auto_generate_for_upcoming_meals(socket.assigns.household.id, 14)
 
-    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
-
-    {:noreply,
-     socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)}
+    {:noreply, reload_grocery_items(socket)}
   end
 
   @impl true
   def handle_event("clear_purchased", _params, socket) do
     Groceries.clear_purchased_items(socket.assigns.household.id)
 
-    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
-
-    {:noreply,
-     socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)}
+    {:noreply, reload_grocery_items(socket)}
   end
 
   @impl true
@@ -104,13 +81,15 @@ defmodule Cuisine13Web.GroceriesLive do
     Pantry.add_from_grocery_item(item, socket.assigns.current_user.id)
     Groceries.delete_grocery_item(item)
 
-    grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-    items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
+    {:noreply, reload_grocery_items(socket)}
+  end
 
+  @impl true
+  def handle_event("search", %{"query" => query}, socket) do
     {:noreply,
      socket
-     |> assign(:grocery_items, grocery_items)
-     |> assign(:items_by_category, items_by_category)}
+     |> assign(:search_query, query)
+     |> reload_grocery_items()}
   end
 
   @impl true
@@ -142,18 +121,14 @@ defmodule Cuisine13Web.GroceriesLive do
 
     case Groceries.create_grocery_item(attrs) do
       {:ok, _item} ->
-        grocery_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
-        items_by_category = Groceries.list_upcoming_items_by_category(socket.assigns.household.id)
-
         {:noreply,
          socket
-         |> assign(:grocery_items, grocery_items)
-         |> assign(:items_by_category, items_by_category)
+         |> reload_grocery_items()
          |> assign(:show_add_modal, false)
          |> assign_new_item_form()}
 
-      {:error, _changeset} ->
-        {:noreply, socket}
+      {:error, changeset} ->
+        {:noreply, put_flash(socket, :error, "Failed to add item: #{format_errors(changeset)}")}
     end
   end
 
@@ -162,7 +137,7 @@ defmodule Cuisine13Web.GroceriesLive do
     ~H"""
     <div class="min-h-screen bg-gray-950 text-white">
       <!-- Header with iOS safe area -->
-      <header class="mobile-header bg-gray-900/95 backdrop-blur-sm border-b border-gray-800">
+      <header class="bg-gray-900/95 backdrop-blur-sm border-b border-gray-800" style="padding-top: max(1rem, env(safe-area-inset-top))">
         <div class="max-w-2xl mx-auto px-4 py-3">
           <div class="flex items-center justify-between">
             <h1 class="text-2xl font-bold text-white">
@@ -206,7 +181,25 @@ defmodule Cuisine13Web.GroceriesLive do
         </div>
       </header>
 
-      <main class="max-w-2xl mx-auto px-4 py-6 mobile-content">
+      <main class="max-w-2xl mx-auto px-4 py-6 pb-24">
+        <!-- Search Bar -->
+        <div class="mb-4">
+          <div class="relative">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input
+              type="text"
+              phx-keyup="search"
+              phx-debounce="300"
+              name="query"
+              value={@search_query}
+              placeholder="Search groceries..."
+              class="w-full pl-10 pr-4 py-2.5 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+
         <%= if Enum.empty?(@grocery_items) do %>
           <div class="text-center py-12">
             <svg class="w-16 h-16 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -472,16 +465,25 @@ defmodule Cuisine13Web.GroceriesLive do
     """
   end
 
-  defp get_or_create_household(user) do
-    case Households.list_households_for_user(user.id) do
-      [] ->
-        {:ok, household} = Households.create_household(%{name: "#{user.email}'s Household"})
-        {:ok, _membership} = Households.add_member(household.id, user.id, "admin")
-        household
+  defp filter_items(items, query) when query == "" or is_nil(query), do: items
 
-      [household | _] ->
-        household
-    end
+  defp filter_items(items, query) do
+    search_term = String.downcase(query)
+
+    Enum.filter(items, fn item ->
+      String.contains?(String.downcase(item.name), search_term) or
+        (item.category && String.contains?(String.downcase(item.category), search_term))
+    end)
+  end
+
+  defp reload_grocery_items(socket) do
+    all_items = Groceries.list_upcoming_grocery_items(socket.assigns.household.id)
+    filtered_items = filter_items(all_items, socket.assigns.search_query)
+    items_by_category = filtered_items |> Enum.group_by(& &1.category)
+
+    socket
+    |> assign(:grocery_items, filtered_items)
+    |> assign(:items_by_category, items_by_category)
   end
 
   defp assign_new_item_form(socket) do
@@ -547,10 +549,16 @@ defmodule Cuisine13Web.GroceriesLive do
 
   defp format_quantity(quantity), do: to_string(quantity)
 
+  defp format_errors(changeset) do
+    Ecto.Changeset.traverse_errors(changeset, fn {msg, _opts} -> msg end)
+    |> Enum.map(fn {field, errors} -> "#{field}: #{Enum.join(errors, ", ")}" end)
+    |> Enum.join("; ")
+  end
+
   defp render_nav(assigns) do
     ~H"""
     <nav class="mobile-nav bg-gray-900/95 backdrop-blur-lg border-t border-gray-800">
-      <div class="max-w-2xl mx-auto px-4">
+      <div class="max-w-7xl mx-auto px-4">
         <div class="flex items-center justify-around pt-2 pb-1">
           <%= live_redirect to: "/", class: "flex flex-col items-center gap-1 text-gray-400 hover:text-white transition-colors" do %>
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
